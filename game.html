@@ -80,6 +80,32 @@
             transform: rotateY(180deg);
         }
 
+        /* Reveal Box for Final Guess */
+        .reveal-container {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .hidden-word-block {
+            background: #000000;
+            color: transparent;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 900;
+            font-size: 1.5rem;
+            transition: all 0.2s;
+            display: inline-block;
+            min-width: 150px;
+        }
+
+        .hidden-word-block.revealed {
+            background: transparent;
+            color: #4facfe;
+            text-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
+        }
+
         .step-hidden { display: none; }
         
         .player-chip {
@@ -138,8 +164,8 @@
 
             <!-- STEP 2: Distribution -->
             <div id="step-distribution" class="step-hidden space-y-6 text-center">
-                <h2 class="text-2xl font-bold">Secret</h2>
-                <p class="text-gray-400 text-sm">Chacun regarde son mot à tour de rôle.</p>
+                <h2 class="text-2xl font-bold">Distribution</h2>
+                <p class="text-gray-400 text-sm">Regardez votre mot secrètement.</p>
                 
                 <div class="py-6">
                     <h3 id="current-player-name" class="text-3xl font-bold text-blue-400 mb-6">Joueur 1</h3>
@@ -182,9 +208,7 @@
                         <h2 class="text-xl font-bold">Tour de table</h2>
                         <span id="desc-progress" class="text-xs text-gray-400 italic">Cliquez quand vous avez parlé</span>
                     </div>
-                    <div id="description-list" class="grid grid-cols-2 gap-2">
-                        <!-- Liste des joueurs pour suivre les descriptions -->
-                    </div>
+                    <div id="description-list" class="grid grid-cols-2 gap-2"></div>
                 </div>
 
                 <div id="vote-section" class="pt-6 space-y-4 hidden border-t border-white/10">
@@ -239,19 +263,21 @@
         </div>
     </div>
 
-    <!-- Modal pour la tentative de l'Imposteur -->
+    <!-- Modal pour la tentative de l'Imposteur (Bouton Révéler) -->
     <div id="modal-guess" class="fixed inset-0 bg-black/95 flex items-center justify-center p-4 z-50 hidden">
         <div class="glass-card p-8 max-w-sm w-full text-center space-y-6 border-2 border-pink-500/50 shadow-2xl">
             <h3 class="text-2xl font-bold text-pink-400 uppercase tracking-tighter">Tentative Finale</h3>
-            <p class="text-sm text-gray-400 italic">L'imposteur doit maintenant annoncer le mot des civils à voix haute.</p>
+            <p class="text-sm text-gray-400">L'imposteur a-t-il trouvé le mot ?</p>
             
-            <div class="py-4 space-y-2">
-                <p class="text-xs uppercase text-blue-400 font-bold">Le mot des civils est :</p>
-                <p id="guess-reveal-word" class="text-3xl font-black text-white uppercase tracking-widest blur-md hover:blur-none transition-all cursor-pointer">MOT SECRET</p>
-                <p class="text-[10px] text-gray-500 mt-2">(Cliquez sur le mot pour le révéler et vérifier)</p>
+            <div class="reveal-container space-y-4">
+                <p class="text-[10px] text-gray-500 uppercase font-bold">Mot secret des civils :</p>
+                <div>
+                    <span id="guess-reveal-word" class="hidden-word-block">MOT SECRET</span>
+                </div>
+                <button id="toggle-reveal-btn" onclick="toggleFinalWord()" class="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg text-xs font-bold uppercase">Afficher le mot</button>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 pt-4">
+            <div class="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
                 <button onclick="impostorWin(false)" class="bg-red-500/20 hover:bg-red-500/40 py-3 rounded-lg text-xs font-bold text-red-400 border border-red-500/30 uppercase">Il a raté</button>
                 <button onclick="impostorWin(true)" class="bg-green-500/20 hover:bg-green-500/40 py-3 rounded-lg text-xs font-bold text-green-400 border border-green-500/30 uppercase">Il a trouvé !</button>
             </div>
@@ -261,19 +287,12 @@
 
     <script>
         const wordPairs = [
-            // Animaux
             ["Lion", "Tigre"], ["Chien", "Loup"], ["Chat", "Panthère"], ["Panda", "Koala"], ["Cheval", "Zèbre"], ["Requin", "Dauphin"], ["Aigle", "Faucon"], ["Tortue", "Escargot"], ["Grenouille", "Crapaud"], ["Vache", "Taureau"], ["Singe", "Gorille"], ["Rat", "Souris"], ["Corbeau", "Pie"], ["Crocodile", "Alligator"], ["Baleine", "Orque"],
-            // Objets
             ["Miroir", "Vitre"], ["Cravate", "Écharpe"], ["Stylo", "Crayon"], ["Guitare", "Violon"], ["Canapé", "Fauteuil"], ["Baskets", "Chaussures"], ["Journal", "Magazine"], ["Lit", "Hamac"], ["Marteau", "Tournevis"], ["Poêle", "Casserole"], ["Assiette", "Bol"], ["Couteau", "Fourchette"], ["Serviette", "Gant de toilette"], ["Bouteille", "Gourde"], ["Sac à dos", "Valise"], ["Montre", "Horloge"], ["Parapluie", "Parasol"], ["Savon", "Shampoing"], ["Peigne", "Brosse"], ["Lunettes", "Lentilles"],
-            // Technologie
             ["Avion", "Hélicoptère"], ["Vélo", "Moto"], ["Smartphone", "Tablette"], ["Ordinateur", "Console"], ["Casque", "Écouteurs"], ["Télévision", "Cinéma"], ["Internet", "Wifi"], ["Souris", "Clavier"], ["Appareil Photo", "Caméra"], ["Fusée", "Satellite"],
-            // Nature
             ["Forêt", "Jungle"], ["Montagne", "Colline"], ["Rivière", "Lac"], ["Soleil", "Lune"], ["Mer", "Océan"], ["Neige", "Glace"], ["Pluie", "Orage"], ["Désert", "Plage"], ["Arbre", "Arbrisseau"], ["Fleur", "Plante"], ["Volcan", "Montagne"], ["Étoile", "Planète"], ["Grotte", "Tunnel"], ["Cascade", "Fontaine"], ["Champ", "Prairie"],
-            // Nourriture & Boisson
             ["Pizza", "Burger"], ["Chocolat", "Nutella"], ["Pomme", "Poire"], ["Banane", "Plantain"], ["Pain", "Baguette"], ["Lait", "Crème"], ["Café", "Thé"], ["Vin", "Bière"], ["Soda", "Jus"], ["Sucre", "Sel"], ["Gâteau", "Tarte"], ["Fromage", "Yaourt"], ["Poulet", "Dinde"], ["Poisson", "Crevette"], ["Pâtes", "Riz"], ["Tomate", "Ketchup"], ["Moutarde", "Mayonnaise"], ["Frites", "Chips"], ["Glace", "Sorbet"], ["Miel", "Confiture"],
-            // Métiers
             ["Médecin", "Infirmier"], ["Boulanger", "Pâtissier"], ["Policier", "Gendarme"], ["Pompier", "Secouriste"], ["Professeur", "Maître"], ["Acteur", "Chanteur"], ["Footballeur", "Rugbyman"], ["Pilote", "Conducteur"], ["Juge", "Avocat"], ["Cuisinier", "Serveur"],
-            // Divers
             ["Football", "Basketball"], ["Tennis", "Badminton"], ["Boxe", "Karaté"], ["Ski", "Surf"], ["Échecs", "Dames"], ["Livre", "BD"], ["Chanson", "Poème"], ["Couleur", "Peinture"], ["Rêve", "Cauchemar"], ["Guerre", "Bataille"], ["Amour", "Amitié"], ["Joie", "Bonheur"], ["Tristesse", "Colère"], ["Ville", "Village"], ["Château", "Palais"]
         ];
 
@@ -285,6 +304,7 @@
             nbImpostors: 0,
             hintsEnabled: true,
             isFlipped: false,
+            isFinalWordRevealed: false,
             describedPlayers: new Set()
         };
 
@@ -490,10 +510,25 @@
         }
 
         function revealImpostorGuess() {
-            const guessWord = document.getElementById('guess-reveal-word');
-            guessWord.innerText = gameState.civilWord;
-            guessWord.classList.add('blur-md'); // Reset blur
+            gameState.isFinalWordRevealed = false;
+            document.getElementById('guess-reveal-word').innerText = gameState.civilWord;
+            document.getElementById('guess-reveal-word').classList.remove('revealed');
+            document.getElementById('toggle-reveal-btn').innerText = "Afficher le mot";
             document.getElementById('modal-guess').classList.remove('hidden');
+        }
+
+        function toggleFinalWord() {
+            gameState.isFinalWordRevealed = !gameState.isFinalWordRevealed;
+            const wordEl = document.getElementById('guess-reveal-word');
+            const btn = document.getElementById('toggle-reveal-btn');
+            
+            if (gameState.isFinalWordRevealed) {
+                wordEl.classList.add('revealed');
+                btn.innerText = "Cacher le mot";
+            } else {
+                wordEl.classList.remove('revealed');
+                btn.innerText = "Afficher le mot";
+            }
         }
 
         function impostorWin(found) {
@@ -501,7 +536,6 @@
             if(found) {
                 endGame("Victoire de l'Impo !", "L'Imposteur a trouvé le mot des civils !");
             } else {
-                // S'il rate, il perd mais on doit voir s'il reste d'autres impo
                 const survivors = gameState.players.filter(p => p.alive);
                 const firstImpo = survivors.find(p => p.role === 'Imposteur');
                 if(firstImpo) {
