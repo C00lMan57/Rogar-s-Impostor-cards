@@ -18,7 +18,6 @@
         .is-flipped { transform: rotateY(180deg); }
         .backface-hidden { backface-visibility: hidden; }
         
-        /* Style pour le Toggle Switch */
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); }
@@ -217,6 +216,9 @@
             const isLast = localCurrentIndex === localPlayerTotal - 1;
             const isImpo = player.role === 'Imposteur';
 
+            // Logique : Si l'indice est actif, l'imposteur ne voit plus ??? mais directement l'indice.
+            const displayWord = (isImpo && localGameData.hintEnabled) ? localGameData.hint : player.word;
+
             document.getElementById('dynamic-content').innerHTML = `
                 <div class="text-center space-y-8 animate-in fade-in duration-300">
                     <h2 class="text-4xl font-black italic uppercase text-emerald-400">${player.name}</h2>
@@ -228,7 +230,14 @@
                             <div class="backface-hidden absolute inset-0 ${isImpo ? 'bg-red-600' : 'bg-white'} rounded-[2.5rem] flex flex-col items-center justify-between py-12 px-6" style="transform: rotateY(180deg)">
                                 <h4 class="text-5xl font-black uppercase ${isImpo ? 'text-white' : 'text-slate-900'}">${player.role}</h4>
                                 <div class="w-full glass p-6 rounded-3xl bg-black/10">
-                                    <p class="text-3xl font-black uppercase ${isImpo ? 'text-white' : 'text-slate-800'}">${player.word}</p>
+                                    <p class="${(isImpo && localGameData.hintEnabled) ? 'text-base italic' : 'text-3xl font-black'} uppercase ${isImpo ? 'text-white' : 'text-slate-800'}">
+                                        ${displayWord}
+                                    </p>
+                                    ${isImpo && localGameData.hintEnabled ? `
+                                        <div class="mt-4 pt-4 border-t border-white/10">
+                                            <p class="text-[9px] uppercase font-black text-white/50 tracking-widest">C'est ton indice pour deviner le mot !</p>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             </div>
                         </div>
@@ -248,12 +257,11 @@
             document.getElementById('btn-hint-trigger').classList.add('hidden');
         };
 
-        // Fonction helper pour générer le bouton de tentative ultime
         function getUltimeAttemptUI() {
             return `
                 <div class="mt-8 pt-6 border-t border-white/10">
                     <button onclick="window.renderImpostorAttempt()" class="w-full border-2 border-red-500/50 text-red-500 p-4 rounded-2xl font-black uppercase text-xs hover:bg-red-500/10 transition-all tracking-widest animate-pulse-red">
-                        ULTIME TENTATIVE ⚡
+                        TENTATIVE ULTIME ⚡
                     </button>
                 </div>`;
         }
@@ -317,7 +325,7 @@
         window.renderImpostorAttempt = (wasEliminated = false) => {
             document.getElementById('dynamic-content').innerHTML = `
                 <div class="text-center space-y-8 animate-in slide-in-from-top-4 duration-500">
-                    <h2 class="text-5xl font-black italic text-red-500 uppercase leading-tight">ULTIME<br>TENTATIVE</h2>
+                    <h2 class="text-5xl font-black italic text-red-500 uppercase leading-tight">TENTATIVE<br>ULTIME</h2>
                     <div class="glass p-8 rounded-[2.5rem] border-red-500/20 shadow-2xl space-y-6">
                         <p class="text-sm font-bold text-gray-300 italic">
                             ${wasEliminated ? "Tu as été démasqué ! Trouve le mot secret." : "Tu révèles ton identité pour tenter de deviner le mot..."}
@@ -325,7 +333,7 @@
                         <div class="space-y-4">
                             <input type="text" id="impo-guess-input" placeholder="LE MOT SECRET..." 
                                 class="w-full bg-white/10 p-5 rounded-2xl border border-white/10 text-center font-black text-2xl uppercase outline-none focus:border-red-500 transition-all text-white">
-                            <button onclick="window.checkImpostorGuess()" class="w-full btn-gradient p-5 rounded-2xl font-black text-lg uppercase shadow-xl tracking-widest">VALIDER LE VOL ⚡</button>
+                            <button onclick="window.checkImpostorGuess()" class="w-full btn-gradient p-5 rounded-2xl font-black text-lg uppercase shadow-xl tracking-widest">VALIDER LA TENTATIVE ULTIME ⚡</button>
                             ${!wasEliminated ? `<button onclick="window.renderLocalDebate()" class="text-xs text-gray-500 underline uppercase font-bold">Retourner dans l'ombre</button>` : ''}
                         </div>
                     </div>
