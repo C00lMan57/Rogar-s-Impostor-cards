@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rogar's Impostor - Final Edition</title>
+    <title>Rogar's Impostor Cards - Le jeu du mot</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -29,14 +29,14 @@
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; inset: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #6366f1; }
+        input:checked + .slider { background-color: #10b981; }
         input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
 <body class="p-4 flex flex-col items-center">
 
-    <!-- MENU PRINCIPAL (VIEW-HUB) -->
-    <div id="view-hub" class="w-full max-w-md py-12 flex flex-col items-center space-y-8 animate-in fade-in duration-500">
+    <!-- MENU PRINCIPAL -->
+    <div id="view-hub" class="w-full max-w-md py-12 flex flex-col items-center space-y-8">
         <header class="text-center">
             <h1 class="text-5xl font-black italic tracking-tighter leading-none mb-2">ROGAR'S<br><span class="text-indigo-500">IMPOSTOR</span></h1>
             <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">The Final Social Game</p>
@@ -48,7 +48,7 @@
             <button id="btn-mode-local" onclick="switchMode('local')" class="flex-1 py-3 rounded-xl font-bold text-xs transition-all text-gray-400 hover:text-white">MODE LOCAL</button>
         </div>
 
-        <div class="grid w-full gap-6">
+        <div class="w-full">
             <div class="glass p-8 rounded-3xl space-y-6 shadow-2xl border-white/5">
                 <!-- SECTION MULTIJOUEUR -->
                 <div id="section-online" class="space-y-6">
@@ -71,29 +71,30 @@
                 </div>
 
                 <!-- SECTION LOCAL -->
-                <div id="section-local" class="hidden space-y-6">
+                <div id="section-local" class="hidden space-y-6 animate-in slide-in-from-bottom-4 duration-300">
                     <div class="space-y-4">
                         <div class="flex items-center justify-between px-1">
                             <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nombre de joueurs</label>
-                            <span id="local-player-count" class="text-xl font-black text-indigo-400">4</span>
+                            <span id="local-player-count" class="text-xl font-black text-emerald-400">4</span>
                         </div>
                         <div class="flex items-center justify-between bg-white/5 p-2 rounded-2xl border border-white/10">
                             <button onclick="changeLocalPlayers(-1)" class="w-12 h-12 flex items-center justify-center glass rounded-xl text-xl font-bold hover:bg-white/10">-</button>
-                            <div class="flex-1 flex justify-center overflow-x-auto px-2 space-x-1" id="local-avatars-list">
-                                <!-- Generated avatars -->
-                            </div>
+                            <div class="flex-1 flex justify-center text-2xl" id="local-avatars-display">👥</div>
                             <button onclick="changeLocalPlayers(1)" class="w-12 h-12 flex items-center justify-center glass rounded-xl text-xl font-bold hover:bg-white/10">+</button>
                         </div>
                     </div>
 
-                    <div id="local-names-container" class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
-                        <!-- Name inputs generated here -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Noms des joueurs (cliquer pour éditer)</label>
+                        <div id="local-names-container" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                            <!-- Inputs générés ici -->
+                        </div>
                     </div>
 
                     <div class="pt-4 border-t border-white/5 space-y-4">
                         <div class="flex items-center justify-between glass p-4 rounded-2xl border-white/5">
                             <div class="flex flex-col">
-                                <span class="text-[10px] font-black uppercase tracking-wider text-white">Mot pour l'imposteur</span>
+                                <span class="text-[10px] font-black uppercase tracking-wider text-white">Mot Indice Imposteur</span>
                                 <span class="text-[9px] text-gray-500 font-bold italic">Lui donne un mot proche du vrai</span>
                             </div>
                             <label class="switch">
@@ -101,7 +102,7 @@
                                 <span class="slider"></span>
                             </label>
                         </div>
-                        <button onclick="startLocalGame()" class="w-full bg-emerald-600 p-5 rounded-2xl font-black shadow-lg uppercase tracking-tighter text-lg">Démarrer Local</button>
+                        <button onclick="startLocalGame()" class="w-full bg-emerald-600 p-5 rounded-2xl font-black shadow-lg uppercase tracking-tighter text-lg hover:bg-emerald-500 transition-colors">Lancer la partie</button>
                     </div>
                 </div>
             </div>
@@ -118,17 +119,14 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
+        // Firebase Config (Placeholder si utilisé hors environnement spécifique)
         const firebaseConfig = JSON.parse(__firebase_config);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'rogar-impostor-final';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'rogar-impostor-local';
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         let currentUser = null;
-        let currentRoomId = null;
-        let isHost = false;
-        
-        // --- ETAT LOCAL ---
         let localPlayerTotal = 4;
         let localPlayerNames = ["Joueur 1", "Joueur 2", "Joueur 3", "Joueur 4", "Joueur 5", "Joueur 6", "Joueur 7", "Joueur 8", "Joueur 9", "Joueur 10"];
         let localGameData = null;
@@ -143,6 +141,7 @@
             ["Vache", "Cochon"], ["Bateau", "Sous-marin"], ["Cinéma", "Théâtre"]
         ];
 
+        // --- NAVIGATION ---
         window.switchMode = (mode) => {
             const isOnline = mode === 'online';
             document.getElementById('section-online').classList.toggle('hidden', !isOnline);
@@ -159,7 +158,7 @@
             if (!isOnline) updateLocalSetupUI();
         };
 
-        // --- GESTION SETUP LOCAL ---
+        // --- SETUP LOCAL ---
         window.changeLocalPlayers = (val) => {
             localPlayerTotal = Math.max(3, Math.min(10, localPlayerTotal + val));
             updateLocalSetupUI();
@@ -174,12 +173,11 @@
                 const input = document.createElement('input');
                 input.type = "text";
                 input.value = localPlayerNames[i];
-                input.className = "bg-white/5 p-3 rounded-xl border border-white/5 text-[10px] font-bold text-center outline-none focus:border-indigo-500/40 transition-all";
+                input.className = "bg-white/5 p-3 rounded-xl border border-white/10 text-[10px] font-bold text-center outline-none focus:border-emerald-500/50 transition-all text-white placeholder-gray-600";
                 input.oninput = (e) => { localPlayerNames[i] = e.target.value; };
                 container.appendChild(input);
             }
         }
-        updateLocalSetupUI();
 
         window.startLocalGame = () => {
             const pair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
@@ -195,11 +193,9 @@
                     isEliminated: false
                 })),
                 civilWord: pair[0],
-                currentClue: "",
                 impoWordEnabled: showImpoWord
             };
             localCurrentIndex = 0;
-            localSelectedPlayerId = null;
             
             document.getElementById('view-hub').classList.add('hidden');
             document.getElementById('game-container').classList.remove('hidden');
@@ -214,8 +210,8 @@
             document.getElementById('dynamic-content').innerHTML = `
                 <div class="text-center space-y-8 animate-in fade-in duration-300">
                     <header>
-                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-1">Passage de téléphone</p>
-                        <h2 class="text-4xl font-black italic tracking-tighter uppercase">${player.name}</h2>
+                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-1">C'est le tour de</p>
+                        <h2 class="text-4xl font-black italic tracking-tighter uppercase text-emerald-400">${player.name}</h2>
                     </header>
 
                     <div class="w-72 h-96 mx-auto perspective-1000" onclick="this.querySelector('.card-inner').classList.toggle('is-flipped')">
@@ -226,33 +222,25 @@
                                     <span class="text-5xl">🤫</span>
                                 </div>
                                 <p class="text-xs font-black uppercase text-indigo-400 animate-pulse-soft tracking-widest">Toucher pour révéler</p>
-                                <p class="mt-4 text-[9px] text-gray-500 font-bold uppercase">Assure-toi d'être seul</p>
                             </div>
                             <!-- VERSO -->
-                            <div class="backface-hidden absolute inset-0 ${isImpo ? 'bg-red-600' : 'bg-white'} rounded-[2.5rem] flex flex-col items-center justify-between py-12 px-6 overflow-hidden" style="transform: rotateY(180deg)">
-                                <div class="absolute -top-10 -right-10 w-40 h-40 ${isImpo ? 'bg-black/10' : 'bg-indigo-50'} rounded-full blur-2xl"></div>
-                                <div class="relative z-10 text-center">
-                                    <span class="text-5xl mb-2 block">${isImpo ? '🕵️‍♂️' : '🛡️'}</span>
+                            <div class="backface-hidden absolute inset-0 ${isImpo ? 'bg-red-600' : 'bg-white'} rounded-[2.5rem] flex flex-col items-center justify-between py-12 px-6" style="transform: rotateY(180deg)">
+                                <div class="text-center">
                                     <h3 class="text-sm font-black uppercase tracking-[0.2em] ${isImpo ? 'text-red-200' : 'text-indigo-400'}">Tu es</h3>
                                     <h4 class="text-5xl font-black uppercase tracking-tighter ${isImpo ? 'text-white' : 'text-slate-900'}">${player.role}</h4>
                                 </div>
-                                <div class="relative z-10 w-full glass p-6 rounded-3xl ${isImpo ? 'bg-black/20 border-white/10' : 'bg-slate-50 border-slate-200'}">
-                                    <p class="text-[10px] font-black uppercase mb-1 ${isImpo ? 'text-red-300' : 'text-indigo-500'}">Ton mot secret :</p>
+                                <div class="w-full glass p-6 rounded-3xl ${isImpo ? 'bg-black/20 border-white/10' : 'bg-slate-50 border-slate-200'}">
+                                    <p class="text-[10px] font-black uppercase mb-1 ${isImpo ? 'text-red-300' : 'text-indigo-500'}">Ton mot :</p>
                                     <p class="text-3xl font-black uppercase tracking-tight ${isImpo ? 'text-white' : 'text-slate-800'}">${player.word}</p>
-                                    ${isImpo && !localGameData.impoWordEnabled ? '<p class="text-[8px] italic mt-2 text-red-200 opacity-60">Infiltre-toi sans indice !</p>' : ''}
                                 </div>
-                                <div class="relative z-10">
-                                    <p class="${isImpo ? 'text-red-200/60' : 'text-slate-400'} text-[9px] font-black uppercase tracking-widest">Cache ton rôle aux autres</p>
-                                </div>
+                                <p class="${isImpo ? 'text-red-200/60' : 'text-slate-400'} text-[9px] font-black uppercase tracking-widest">Cache bien ton jeu</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <button onclick="${isLast ? 'renderLocalDebate()' : 'nextLocalPlayer()'}" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase shadow-lg text-lg tracking-tighter">
-                            ${isLast ? 'DÉBUTER LE DÉBAT' : 'JOUEUR SUIVANT'}
-                        </button>
-                    </div>
+                    <button onclick="${isLast ? 'renderLocalDebate()' : 'nextLocalPlayer()'}" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase shadow-lg text-lg tracking-tighter">
+                        ${isLast ? 'DÉBUTER LE DÉBAT' : 'JOUEUR SUIVANT'}
+                    </button>
                 </div>`;
         }
 
@@ -263,266 +251,79 @@
 
         window.renderLocalDebate = () => {
             document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-6 animate-in zoom-in duration-500">
-                    <div class="glass p-8 rounded-[2.5rem] border-indigo-500/20 shadow-2xl relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-right from-indigo-500 to-purple-500"></div>
-                        <h2 class="text-5xl font-black italic mb-6 tracking-tighter uppercase">Le Débat</h2>
-                        <div class="space-y-4 text-left">
-                            <p class="text-gray-400 text-sm font-medium leading-relaxed bg-white/5 p-4 rounded-2xl border border-white/5">
-                                <span class="text-indigo-400 font-black text-[10px] uppercase block mb-2 tracking-widest">Phase Actuelle</span>
-                                Échangez vos indices. Si l'imposteur pense avoir trouvé le mot des civils, il peut tenter un coup d'éclat !
-                            </p>
-                        </div>
+                <div class="text-center space-y-6">
+                    <div class="glass p-8 rounded-[2.5rem] border-indigo-500/20 shadow-2xl">
+                        <h2 class="text-4xl font-black italic mb-4 uppercase">Le Débat</h2>
+                        <p class="text-gray-400 text-sm">Échangez vos indices puis désignez un suspect.</p>
                     </div>
-
                     <div class="grid gap-3">
-                        <button onclick="renderLocalAttempt()" class="w-full glass border-indigo-500/30 p-5 rounded-2xl font-black uppercase text-indigo-400 hover:bg-indigo-500/10 transition-all flex items-center justify-center space-x-3">
-                            <span>🔍</span> <span>Tentative Imposteur</span>
-                        </button>
-                        <button onclick="renderLocalVote()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase shadow-lg text-lg tracking-tighter">
-                            Passer au vote
-                        </button>
+                        <button onclick="renderLocalVote()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase shadow-lg text-lg">Passer au vote</button>
+                        <button onclick="renderLocalAttempt()" class="w-full glass p-4 rounded-2xl font-black uppercase text-xs text-red-400">Tentative Imposteur</button>
                     </div>
                 </div>`;
         };
 
-        window.renderLocalAttempt = () => {
-            document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-6 animate-in fade-in duration-300">
-                    <header>
-                        <h2 class="text-3xl font-black italic tracking-tighter uppercase text-red-500">TENTATIVE</h2>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 italic">Donnez le téléphone à l'imposteur</p>
-                    </header>
-
-                    <div class="glass p-8 rounded-[2.5rem] space-y-6">
-                        <p class="text-sm text-gray-400 px-4">Si tu devines le mot des civils, tu gagnes immédiatement. Sinon, tu es démasqué !</p>
-                        
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block text-left ml-2">Mot deviné :</label>
-                            <input type="text" id="attempt-word" placeholder="..." class="w-full bg-white/5 p-5 rounded-2xl outline-none border-2 border-white/10 text-center font-black focus:border-red-500/50 transition-all text-2xl uppercase text-white">
-                        </div>
-                    </div>
-
-                    <div class="grid gap-3 pt-4">
-                        <button onclick="confirmAttempt()" class="w-full bg-red-600 p-5 rounded-2xl font-black uppercase shadow-lg text-lg">Valider la tentative</button>
-                        <button onclick="renderLocalDebate()" class="w-full p-4 text-[10px] font-black text-gray-600 uppercase tracking-widest">Retour au débat</button>
-                    </div>
-                </div>`;
-        };
-
-        window.confirmAttempt = () => {
-            const word = document.getElementById('attempt-word').value.trim().toLowerCase();
-            if (!word) return;
-            const correctWord = localGameData.civilWord.toLowerCase();
-            renderLocalGameEnd(word === correctWord, true);
-        };
-
+        // --- GESTION VOTE ET FIN ---
         window.renderLocalVote = () => {
-            localSelectedPlayerId = null;
             const players = localGameData.players;
-
             document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-6 animate-in fade-in duration-300">
-                    <header>
-                        <h2 class="text-3xl font-black italic tracking-tighter uppercase">Élimination</h2>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Désignez le suspect</p>
-                    </header>
-
-                    <div class="grid grid-cols-2 gap-3 w-full" id="vote-grid">
+                <div class="text-center space-y-6">
+                    <h2 class="text-3xl font-black italic uppercase">Élimination</h2>
+                    <div class="grid grid-cols-2 gap-3" id="vote-grid">
                         ${players.map(p => `
                             <button id="vote-btn-${p.id}" onclick="handleVoteClick(${p.id})" 
-                                class="p-5 rounded-2xl border-2 font-bold transition-all flex flex-col items-center justify-center space-y-1
-                                ${p.isEliminated ? 'bg-gray-800/50 border-gray-700 text-gray-500 cursor-not-allowed' : 'bg-white/5 border-white/10 text-white hover:border-indigo-500/50'}"
+                                class="p-5 rounded-2xl border-2 font-bold transition-all flex flex-col items-center
+                                ${p.isEliminated ? 'bg-gray-800 opacity-50 border-transparent text-gray-500' : 'bg-white/5 border-white/10'}"
                                 ${p.isEliminated ? 'disabled' : ''}>
-                                <span class="text-[9px] opacity-50 uppercase tracking-tighter truncate w-full">${p.name}</span>
-                                <span class="text-2xl">${p.id}</span>
-                                ${p.isEliminated ? `<span class="text-[9px] font-black uppercase text-indigo-400 mt-2">${p.role}</span>` : ''}
+                                <span class="text-[10px] opacity-60">${p.name}</span>
+                                <span class="text-xl">#${p.id}</span>
                             </button>
                         `).join('')}
                     </div>
-
-                    <div id="vote-action-container" class="flex flex-col items-center space-y-4 mt-4">
-                        <div class="h-12 flex items-center justify-center w-full">
-                            <p id="vote-hint" class="text-xs text-gray-500 italic">Cliquez sur un joueur...</p>
-                            <button id="confirm-vote-btn" onclick="confirmElimination()" class="hidden w-full bg-red-600 p-4 rounded-2xl font-black uppercase shadow-lg animate-in zoom-in">
-                                Confirmer l'élimination
-                            </button>
-                        </div>
-                        
-                        <div class="w-full border-t border-white/5 pt-4">
-                             <button onclick="renderLocalAttempt()" class="w-full py-4 rounded-xl border border-red-500/30 text-[10px] font-black text-red-400 uppercase tracking-widest hover:bg-red-500/5 transition-all">
-                                ⚠️ Tentative de la dernière chance
-                             </button>
-                        </div>
+                    <div id="vote-action" class="h-16 flex items-center justify-center">
+                        <button id="confirm-vote-btn" onclick="confirmElimination()" class="hidden w-full bg-red-600 p-4 rounded-2xl font-black uppercase shadow-lg animate-in zoom-in">Confirmer</button>
                     </div>
-
-                    <button onclick="location.reload()" class="w-full mt-2 p-4 rounded-2xl border border-white/10 text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] hover:bg-white/5 transition-colors">Quitter</button>
                 </div>`;
-        }
+        };
 
         window.handleVoteClick = (id) => {
-            const player = localGameData.players.find(p => p.id === id);
-            if (player.isEliminated) return;
-
-            if (localSelectedPlayerId) {
-                const prevBtn = document.getElementById(`vote-btn-${localSelectedPlayerId}`);
-                if (prevBtn) prevBtn.classList.remove('selected-to-vote');
-            }
-
+            if (localSelectedPlayerId) document.getElementById(`vote-btn-${localSelectedPlayerId}`).classList.remove('selected-to-vote');
             localSelectedPlayerId = id;
             document.getElementById(`vote-btn-${id}`).classList.add('selected-to-vote');
-            
-            document.getElementById('vote-hint').classList.add('hidden');
             document.getElementById('confirm-vote-btn').classList.remove('hidden');
-            document.getElementById('confirm-vote-btn').innerText = `Éliminer ${player.name} ?`;
         };
 
         window.confirmElimination = () => {
-            if (!localSelectedPlayerId) return;
             const player = localGameData.players.find(p => p.id === localSelectedPlayerId);
             player.isEliminated = true;
-            const isImposteur = player.role === 'Imposteur';
-
-            if (isImposteur) {
-                renderLocalGameEnd(true);
-            } else {
-                const remainingCivils = localGameData.players.filter(p => !p.isEliminated && p.role === 'Civil').length;
-                if (remainingCivils <= 1) {
-                    renderLocalGameEnd(false);
-                } else {
-                    renderLocalVote();
-                }
-            }
+            if (player.role === 'Imposteur') renderLocalGameEnd(true);
+            else if (localGameData.players.filter(p => !p.isEliminated && p.role === 'Civil').length <= 1) renderLocalGameEnd(false);
+            else renderLocalVote();
         };
 
-        function renderLocalGameEnd(civilsWin, isAttempt = false) {
+        function renderLocalGameEnd(civilsWin) {
             const impo = localGameData.players.find(p => p.role === 'Imposteur');
-            
             document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-8 animate-in zoom-in duration-700">
-                    <div class="relative">
-                        <div class="text-8xl mb-4">${civilsWin ? '🎉' : '🕵️‍♂️'}</div>
-                        <h2 class="text-5xl font-black italic tracking-tighter ${civilsWin ? 'text-emerald-400' : 'text-red-500'} leading-none">
-                            ${civilsWin ? 'VICTOIRE DES CIVILS' : "L'IMPOSTEUR A GAGNÉ"}
-                        </h2>
-                        ${isAttempt ? `<p class="mt-4 text-xs font-black uppercase tracking-[0.3em] text-white/40">Par Tentative</p>` : ''}
+                <div class="text-center space-y-8 animate-in zoom-in">
+                    <h2 class="text-5xl font-black italic ${civilsWin ? 'text-emerald-400' : 'text-red-500'}">
+                        ${civilsWin ? 'VICTOIRE DES CIVILS' : "L'IMPOSTEUR GAGNE"}
+                    </h2>
+                    <div class="glass p-8 rounded-[2.5rem]">
+                        <p class="text-[10px] text-gray-500 uppercase font-black mb-2">L'Imposteur était</p>
+                        <p class="text-3xl font-black uppercase">${impo.name}</p>
+                        <p class="text-xs text-indigo-400 mt-2 italic">Le mot était : ${localGameData.civilWord}</p>
                     </div>
-
-                    <div class="glass p-8 rounded-[2.5rem] border-white/5 space-y-4 shadow-2xl">
-                        <p class="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">Identité du coupable</p>
-                        <div class="bg-white/10 p-6 rounded-3xl border border-white/10">
-                            <p class="text-indigo-400 font-black text-xs uppercase mb-1">${impo.name}</p>
-                            <p class="text-4xl font-black uppercase text-white tracking-tighter">${impo.role}</p>
-                            <div class="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-2">
-                                <div>
-                                    <p class="text-[8px] uppercase text-gray-500">Mot Civils</p>
-                                    <p class="text-sm font-bold">${localGameData.civilWord}</p>
-                                </div>
-                                <div>
-                                    <p class="text-[8px] uppercase text-gray-500">Mot Imposteur</p>
-                                    <p class="text-sm font-bold">${impo.word}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid gap-3">
-                        <button onclick="startLocalGame()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase shadow-lg text-lg tracking-tighter">Relancer</button>
-                        <button onclick="location.reload()" class="w-full mt-2 p-5 rounded-2xl border-2 border-white/10 glass font-black uppercase text-sm tracking-widest hover:bg-white/10 transition-all flex items-center justify-center space-x-2">
-                             <span>🏠</span> <span>Retour au menu</span>
-                        </button>
-                    </div>
+                    <button onclick="location.reload()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase">Menu Principal</button>
                 </div>`;
         }
 
-        // --- LOGIQUE ONLINE ---
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        };
-        onAuthStateChanged(auth, u => { currentUser = u; });
-        initAuth();
-
-        window.createRoom = async () => {
-            if (!currentUser) return;
-            const name = document.getElementById('player-name').value || "Hôte";
-            const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
-            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-            isHost = true;
-            await setDoc(roomRef, { status: 'waiting', hostId: currentUser.uid, players: [{ uid: currentUser.uid, name, role: '', alive: true }], currentClue: "" });
-            startListener(roomId);
-        };
-
-        window.joinRoom = async () => {
-            const code = document.getElementById('room-code').value.toUpperCase().trim();
-            const name = document.getElementById('player-name').value || "Joueur";
-            if (!code || !currentUser) return;
-            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
-            const snap = await getDoc(roomRef);
-            if (snap.exists()) {
-                const players = snap.data().players || [];
-                if (!players.find(p => p.uid === currentUser.uid)) {
-                    await updateDoc(roomRef, { players: arrayUnion({ uid: currentUser.uid, name, role: '', alive: true }) });
-                }
-                startListener(code);
-            }
-        };
-
-        function startListener(roomId) {
-            currentRoomId = roomId;
-            document.getElementById('view-hub').classList.add('hidden');
-            document.getElementById('game-container').classList.remove('hidden');
-            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId), (snap) => {
-                const data = snap.data();
-                if (data) data.status === 'waiting' ? renderLobby(data) : renderGame(data);
-            });
-        }
-
-        function renderLobby(data) {
-            const players = data.players || [];
-            document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-6">
-                    <div class="glass p-6 rounded-3xl border-indigo-500/20 shadow-xl">
-                        <p class="text-[10px] text-gray-500 font-black mb-1 uppercase tracking-widest">Code du Salon</p>
-                        <h2 class="text-5xl font-black text-indigo-400 tracking-widest">${currentRoomId}</h2>
-                    </div>
-                    <div class="glass p-6 rounded-3xl space-y-2">
-                        ${players.map(p => `<div class="p-3 bg-white/5 rounded-xl border border-white/5 text-sm font-bold flex justify-between items-center"><span class="${p.uid === currentUser.uid ? 'text-indigo-400' : 'text-white'}">${p.name}</span></div>`).join('')}
-                    </div>
-                    ${isHost ? `<button onclick="launchGame()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase text-lg">Lancer</button>` : `<div class="p-6 glass rounded-2xl animate-pulse-soft text-[10px] uppercase font-black text-gray-500">En attente de l'hôte...</div>`}
-                </div>`;
-        }
-
-        window.launchGame = async () => {
-            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
-            const snap = await getDoc(roomRef);
-            const players = [...snap.data().players];
-            const impIdx = Math.floor(Math.random() * players.length);
-            const pair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
-            players.forEach((p, i) => p.role = i === impIdx ? 'Imposteur' : 'Civil');
-            await updateDoc(roomRef, { status: 'playing', players, civilWord: pair[0], impoWord: pair[1] });
-        };
-
-        function renderGame(data) {
-            const me = data.players.find(p => p.uid === currentUser.uid);
-            const word = me.role === 'Imposteur' ? data.impoWord : data.civilWord;
-            document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-6">
-                    <div class="w-64 h-80 mx-auto perspective-1000" onclick="this.querySelector('.card-inner').classList.toggle('is-flipped')">
-                        <div class="card-inner relative w-full h-full shadow-2xl rounded-3xl">
-                            <div class="backface-hidden absolute inset-0 glass rounded-3xl flex items-center justify-center">🤫</div>
-                            <div class="backface-hidden absolute inset-0 bg-white text-slate-900 rounded-3xl flex flex-col items-center justify-center" style="transform: rotateY(180deg)">
-                                <p class="text-[10px] uppercase font-black text-indigo-600">${me.role}</p>
-                                <p class="text-4xl font-black uppercase">${word}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="location.reload()" class="w-full p-4 rounded-2xl border border-white/10 text-[10px] font-bold uppercase">Quitter</button>
-                </div>`;
-        }
+        // --- INIT AUTH ---
+        (async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+            else await signInAnonymously(auth);
+            onAuthStateChanged(auth, u => currentUser = u);
+            updateLocalSetupUI(); // Charger les noms par défaut
+        })();
     </script>
 </body>
 </html>
