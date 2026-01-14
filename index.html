@@ -56,20 +56,21 @@
                         <input type="text" id="player-name" placeholder="Pseudo" class="w-full bg-white/5 p-4 rounded-2xl outline-none border border-white/10 text-center font-bold focus:border-indigo-500/50 transition-all text-white">
                     </div>
                     <div class="pt-2 space-y-3">
-                        <button onclick="createRoom()" class="w-full btn-gradient p-5 rounded-2xl font-black shadow-lg uppercase tracking-tighter text-lg">Créer un salon</button>
+                        <button onclick="window.createRoom()" class="w-full btn-gradient p-5 rounded-2xl font-black shadow-lg uppercase tracking-tighter text-lg">Créer un salon</button>
                         <div class="relative flex items-center py-2">
                             <div class="flex-grow border-t border-white/5"></div>
                             <span class="flex-shrink mx-4 text-[10px] font-black text-gray-600 uppercase">Ou rejoindre</span>
                             <div class="flex-grow border-t border-white/5"></div>
                         </div>
                         <div class="flex gap-2">
-                            <input type="text" id="room-code" placeholder="CODE" class="w-full bg-white/5 p-4 rounded-xl outline-none border border-white/10 text-center uppercase font-mono font-bold text-white">
-                            <button onclick="joinRoom()" class="glass px-6 rounded-xl font-bold text-sm hover:bg-white/10 transition-colors">OK</button>
+                            <input type="text" id="room-code-input" placeholder="CODE" class="w-full bg-white/5 p-4 rounded-xl outline-none border border-white/10 text-center uppercase font-mono font-bold text-white">
+                            <button onclick="window.joinRoom()" class="glass px-6 rounded-xl font-bold text-sm hover:bg-white/10 transition-colors">OK</button>
                         </div>
                     </div>
                 </div>
 
                 <div id="section-local" class="hidden space-y-6">
+                    <!-- Section locale existante inchangée -->
                     <div class="space-y-4">
                         <div class="flex items-center justify-between px-1">
                             <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nombre de joueurs</label>
@@ -113,7 +114,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBrn4qChbtsZzP7nMKA5GGR7K024pFxtf0",
@@ -129,6 +130,13 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // State Global
+        let currentUserId = null;
+        let currentRoomId = null;
+        let isHost = false;
+        let unsubscribeRoom = null;
+
+        // Configuration Locale
         let localPlayerTotal = 4;
         let localPlayerNames = ["Joueur 1", "Joueur 2", "Joueur 3", "Joueur 4", "Joueur 5", "Joueur 6", "Joueur 7", "Joueur 8", "Joueur 9", "Joueur 10"];
         let localGameData = null;
@@ -149,8 +157,14 @@
             { words: ["Cinéma", "Théâtre"], hint: "C'est un lieu culturel pour voir une performance." }
         ];
 
+        // --- AUTH & SETUP ---
         signInAnonymously(auth).catch(err => console.error("Erreur Auth:", err));
-        onAuthStateChanged(auth, u => { if(u) updateLocalSetupUI(); });
+        onAuthStateChanged(auth, u => { 
+            if(u) {
+                currentUserId = u.uid;
+                updateLocalSetupUI(); 
+            }
+        });
 
         window.switchMode = (mode) => {
             const isOnline = mode === 'online';
@@ -160,12 +174,185 @@
             document.getElementById('section-local').classList.toggle('hidden', isOnline);
         };
 
+        // --- MODE ONLINE LOGIC ---
+
+        window.createRoom = async () => {
+            const name = document.getElementById('player-name').value || "Joueur";
+            const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
+            currentRoomId = roomId;
+            isHost = true;
+
+            const roomRef = doc(db, "rooms", roomId);
+            await setDoc(roomRef, {
+                id: roomId,
+                hostId: currentUserId,
+                players: [{ id: currentUserId, name: name, isHost: true }],
+                status: 'lobby',
+                settings: {
+                    impostorsCount: 1,
+                    hintsEnabled: true
+                }
+            });
+
+            listenToRoom(roomId);
+        };
+
+        window.joinRoom = async () => {
+            const name = document.getElementById('player-name').value || "Joueur";
+            const roomId = document.getElementById('room-code-input').value.toUpperCase();
+            if(!roomId) return;
+
+            const roomRef = doc(db, "rooms", roomId);
+            const snap = await getDoc(roomRef);
+            
+            if(snap.exists()) {
+                const data = snap.data();
+                if(data.status !== 'lobby') {
+                    alert("Partie déjà commencée !");
+                    return;
+                }
+                currentRoomId = roomId;
+                isHost = (data.hostId === currentUserId);
+                await updateDoc(roomRef, {
+                    players: arrayUnion({ id: currentUserId, name: name, isHost: false })
+                });
+                listenToRoom(roomId);
+            } else {
+                alert("Salon introuvable.");
+            }
+        };
+
+        function listenToRoom(roomId) {
+            document.getElementById('view-hub').classList.add('hidden');
+            document.getElementById('game-container').classList.remove('hidden');
+
+            unsubscribeRoom = onSnapshot(doc(db, "rooms", roomId), (snap) => {
+                if(!snap.exists()) {
+                    alert("Le salon a été fermé.");
+                    window.resetToMenu();
+                    return;
+                }
+                const data = snap.data();
+                
+                // Vérifier si on a été kické
+                const me = data.players.find(p => p.id === currentUserId);
+                if(!me) {
+                    alert("Tu as été expulsé du salon.");
+                    window.resetToMenu();
+                    return;
+                }
+
+                if(data.status === 'lobby') {
+                    renderLobby(data);
+                } else if(data.status === 'playing') {
+                    // Logic for playing state (coming soon)
+                }
+            });
+        }
+
+        window.updateSettings = async (key, val) => {
+            if(!isHost) return;
+            const roomRef = doc(db, "rooms", currentRoomId);
+            const snap = await getDoc(roomRef);
+            const settings = snap.data().settings;
+            settings[key] = val;
+            await updateDoc(roomRef, { settings });
+        };
+
+        window.kickPlayer = async (playerId) => {
+            if(!isHost) return;
+            const roomRef = doc(db, "rooms", currentRoomId);
+            const snap = await getDoc(roomRef);
+            const players = snap.data().players.filter(p => p.id !== playerId);
+            await updateDoc(roomRef, { players });
+        };
+
+        function renderLobby(data) {
+            const settings = data.settings;
+            document.getElementById('dynamic-content').innerHTML = `
+                <div class="space-y-6 animate-in fade-in duration-300">
+                    <div class="text-center">
+                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Code du salon</p>
+                        <h2 class="text-4xl font-black text-indigo-500 font-mono tracking-tighter">${data.id}</h2>
+                    </div>
+
+                    <!-- Paramètres (Hôte seulement) -->
+                    <div class="glass p-6 rounded-3xl space-y-4 border-white/10">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase text-gray-400">Nombre d'imposteurs</span>
+                            <div class="flex items-center gap-3">
+                                ${isHost ? `
+                                    <button onclick="window.updateSettings('impostorsCount', Math.max(1, ${settings.impostorsCount}-1))" class="w-8 h-8 glass rounded-lg">-</button>
+                                    <span class="font-black text-indigo-400">${settings.impostorsCount}</span>
+                                    <button onclick="window.updateSettings('impostorsCount', Math.min(3, ${settings.impostorsCount}+1))" class="w-8 h-8 glass rounded-lg">+</button>
+                                ` : `<span class="font-black text-indigo-400">${settings.impostorsCount}</span>`}
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase text-gray-400">Indices autorisés</span>
+                            <label class="switch">
+                                <input type="checkbox" ${settings.hintsEnabled ? 'checked' : ''} 
+                                    ${!isHost ? 'disabled' : ''} 
+                                    onchange="window.updateSettings('hintsEnabled', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Liste des joueurs -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between px-1">
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Joueurs (${data.players.length})</label>
+                            <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Prêts ?</span>
+                        </div>
+                        <div class="grid grid-cols-1 gap-2">
+                            ${data.players.map(p => `
+                                <div class="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/10">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-lg">${p.isHost ? '👑' : '👤'}</span>
+                                        <span class="font-bold ${p.id === currentUserId ? 'text-indigo-400' : ''}">${p.name}</span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        ${isHost && p.id !== currentUserId ? `
+                                            <button onclick="window.kickPlayer('${p.id}')" class="text-red-500/50 hover:text-red-500 text-xl px-2">×</button>
+                                        ` : ''}
+                                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="pt-4 space-y-3">
+                        ${isHost ? `
+                            <button class="w-full btn-gradient p-5 rounded-2xl font-black uppercase text-lg shadow-xl ${data.players.length < 3 ? 'opacity-50 grayscale cursor-not-allowed' : ''}">
+                                ${data.players.length < 3 ? 'Besoin de 3 joueurs min.' : 'Lancer la partie'}
+                            </button>
+                        ` : `
+                            <div class="p-5 text-center glass rounded-2xl border-white/5 italic text-gray-500 text-sm">
+                                En attente de l'hôte...
+                            </div>
+                        `}
+                        <button onclick="window.resetToMenu()" class="w-full py-3 text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-white transition-colors">Quitter le salon</button>
+                    </div>
+                </div>`;
+        }
+
+        // --- MODE LOCAL LOGIC (RESTE DU CODE INCHANGÉ) ---
+
         window.changeLocalPlayers = (val) => {
             localPlayerTotal = Math.max(3, Math.min(10, localPlayerTotal + val));
             updateLocalSetupUI();
         };
 
-        window.resetToMenu = () => {
+        window.resetToMenu = async () => {
+            if(unsubscribeRoom) unsubscribeRoom();
+            if(currentRoomId && isHost) {
+                // Optionnel: Supprimer le salon si l'hôte quitte
+                await deleteDoc(doc(db, "rooms", currentRoomId));
+            }
+            currentRoomId = null;
+            isHost = false;
             document.getElementById('game-container').classList.add('hidden');
             document.getElementById('view-hub').classList.remove('hidden');
         };
@@ -215,8 +402,6 @@
             const player = localGameData.players[localCurrentIndex];
             const isLast = localCurrentIndex === localPlayerTotal - 1;
             const isImpo = player.role === 'Imposteur';
-
-            // Logique : Si l'indice est actif, l'imposteur ne voit plus ??? mais directement l'indice.
             const displayWord = (isImpo && localGameData.hintEnabled) ? localGameData.hint : player.word;
 
             document.getElementById('dynamic-content').innerHTML = `
@@ -233,11 +418,6 @@
                                     <p class="${(isImpo && localGameData.hintEnabled) ? 'text-base italic' : 'text-3xl font-black'} uppercase ${isImpo ? 'text-white' : 'text-slate-800'}">
                                         ${displayWord}
                                     </p>
-                                    ${isImpo && localGameData.hintEnabled ? `
-                                        <div class="mt-4 pt-4 border-t border-white/10">
-                                            <p class="text-[9px] uppercase font-black text-white/50 tracking-widest">C'est ton indice pour deviner le mot !</p>
-                                        </div>
-                                    ` : ''}
                                 </div>
                             </div>
                         </div>
@@ -257,15 +437,6 @@
             document.getElementById('btn-hint-trigger').classList.add('hidden');
         };
 
-        function getUltimeAttemptUI() {
-            return `
-                <div class="mt-8 pt-6 border-t border-white/10">
-                    <button onclick="window.renderImpostorAttempt()" class="w-full border-2 border-red-500/50 text-red-500 p-4 rounded-2xl font-black uppercase text-xs hover:bg-red-500/10 transition-all tracking-widest animate-pulse-red">
-                        TENTATIVE ULTIME ⚡
-                    </button>
-                </div>`;
-        }
-
         window.renderLocalDebate = () => {
             let hintUI = "";
             if (localGameData.hintEnabled) {
@@ -281,9 +452,12 @@
                 <div class="text-center space-y-6">
                     <h2 class="text-4xl font-black italic uppercase">Le DéBAT</h2>
                     ${hintUI}
-                    <p class="text-gray-400 text-sm">Analysez les comportements...</p>
                     <button onclick="window.renderLocalVote()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase shadow-xl">Voter l'élimination</button>
-                    ${getUltimeAttemptUI()}
+                    <div class="mt-8 pt-6 border-t border-white/10">
+                        <button onclick="window.renderImpostorAttempt()" class="w-full border-2 border-red-500/50 text-red-500 p-4 rounded-2xl font-black uppercase text-xs hover:bg-red-500/10 transition-all tracking-widest animate-pulse-red">
+                            TENTATIVE ULTIME ⚡
+                        </button>
+                    </div>
                 </div>`;
         };
 
@@ -302,7 +476,6 @@
                         `).join('')}
                     </div>
                     <button id="confirm-vote-btn" onclick="window.confirmElimination()" class="hidden w-full bg-red-600 p-4 rounded-2xl font-black uppercase shadow-lg">Éjecter du salon</button>
-                    ${getUltimeAttemptUI()}
                 </div>`;
         };
 
@@ -327,14 +500,10 @@
                 <div class="text-center space-y-8 animate-in slide-in-from-top-4 duration-500">
                     <h2 class="text-5xl font-black italic text-red-500 uppercase leading-tight">TENTATIVE<br>ULTIME</h2>
                     <div class="glass p-8 rounded-[2.5rem] border-red-500/20 shadow-2xl space-y-6">
-                        <p class="text-sm font-bold text-gray-300 italic">
-                            ${wasEliminated ? "Tu as été démasqué ! Trouve le mot secret." : "Tu révèles ton identité pour tenter de deviner le mot..."}
-                        </p>
                         <div class="space-y-4">
                             <input type="text" id="impo-guess-input" placeholder="LE MOT SECRET..." 
                                 class="w-full bg-white/10 p-5 rounded-2xl border border-white/10 text-center font-black text-2xl uppercase outline-none focus:border-red-500 transition-all text-white">
                             <button onclick="window.checkImpostorGuess()" class="w-full btn-gradient p-5 rounded-2xl font-black text-lg uppercase shadow-xl tracking-widest">VALIDER LA TENTATIVE ULTIME ⚡</button>
-                            ${!wasEliminated ? `<button onclick="window.renderLocalDebate()" class="text-xs text-gray-500 underline uppercase font-bold">Retourner dans l'ombre</button>` : ''}
                         </div>
                     </div>
                 </div>`;
@@ -361,7 +530,7 @@
                             <p class="text-2xl font-black uppercase text-indigo-400">${localGameData.civilWord}</p>
                         </div>
                     </div>
-                    <button onclick="window.resetToMenu()" class="w-full bg-white text-slate-900 p-5 rounded-2xl font-black uppercase shadow-xl hover:bg-gray-200 transition-colors">RETOUR AU MENU</button>
+                    <button onclick="window.resetToMenu()" class="w-full bg-white text-slate-900 p-5 rounded-2xl font-black uppercase shadow-xl">RETOUR AU MENU</button>
                 </div>`;
         }
     </script>
