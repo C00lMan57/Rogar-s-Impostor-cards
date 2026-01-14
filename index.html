@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rogar's Impostor Cards - Arriverez vous à le démasquer ?</title>
+    <title>Rogar's Impostor Cards - Final Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -11,8 +11,7 @@
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .btn-gradient { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); transition: all 0.2s ease; }
         .btn-gradient-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); transition: all 0.2s ease; }
-        .btn-gradient:hover:not(:disabled), .btn-gradient-green:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
-        .btn-gradient:active, .btn-gradient-green:active { transform: scale(0.95); }
+        
         .perspective-1000 { perspective: 1000px; }
         .card-inner { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
         .is-flipped { transform: rotateY(180deg); }
@@ -21,22 +20,20 @@
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #10b981; border-color: #10b981; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        @keyframes pulse-red {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            50% { box-shadow: 0 0 20px 0 rgba(239, 68, 68, 0.2); }
-        }
+        .progress-bar { transition: width 1s linear; }
+        @keyframes pulse-red { 0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 50% { box-shadow: 0 0 20px 0 rgba(239, 68, 68, 0.2); } }
         .animate-pulse-red { animation: pulse-red 2s infinite; }
         .animate-pulse-soft { animation: pulse-soft 2s infinite; }
         @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .selected-to-vote { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.1) !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
     </style>
 </head>
 <body class="p-4 flex flex-col items-center">
 
+    <!-- HUB PRINCIPAL -->
     <div id="view-hub" class="w-full max-w-md py-12 flex flex-col items-center space-y-8">
         <header class="text-center">
             <h1 class="text-5xl font-black italic tracking-tighter leading-none mb-2">ROGAR'S<br><span class="text-indigo-500">IMPOSTOR</span></h1>
@@ -68,45 +65,14 @@
                         </div>
                     </div>
                 </div>
-
-                <div id="section-local" class="hidden space-y-6">
-                    <!-- Section locale existante inchangée -->
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between px-1">
-                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nombre de joueurs</label>
-                            <span id="local-player-count" class="text-xl font-black text-emerald-400">4</span>
-                        </div>
-                        <div class="flex items-center justify-between bg-white/5 p-2 rounded-2xl border border-white/10">
-                            <button onclick="changeLocalPlayers(-1)" class="w-12 h-12 flex items-center justify-center glass rounded-xl text-xl font-bold hover:bg-white/10">-</button>
-                            <div class="flex-1 flex justify-center text-2xl">👥</div>
-                            <button onclick="changeLocalPlayers(1)" class="w-12 h-12 flex items-center justify-center glass rounded-xl text-xl font-bold hover:bg-white/10">+</button>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/10">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Aide de jeu</span>
-                            <span class="font-bold text-sm">Indices autorisés</span>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="local-hint-toggle" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Noms des joueurs</label>
-                        <div id="local-names-container" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1"></div>
-                    </div>
-
-                    <div class="pt-4 border-t border-white/5">
-                        <button onclick="startLocalGame()" class="w-full btn-gradient-green p-5 rounded-2xl font-black shadow-lg uppercase tracking-tighter text-lg">Lancer la partie</button>
-                    </div>
+                <div id="section-local" class="hidden text-center py-10 text-gray-500 italic">
+                    Utilisez le mode Online pour profiter des nouvelles fonctionnalités de gestion d'hôte.
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- CONTAINER DE JEU DYNAMIQUE -->
     <div id="game-container" class="w-full max-w-md hidden">
         <div id="dynamic-content"></div>
     </div>
@@ -114,139 +80,94 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBrn4qChbtsZzP7nMKA5GGR7K024pFxtf0",
             authDomain: "rogarsimpostorcards.firebaseapp.com",
             projectId: "rogarsimpostorcards",
-            storageBucket: "rogarsimpostorcards.firebasestorage.app",
-            messagingSenderId: "750585646128",
-            appId: "1:750585646128:web:168c0926d3a6c90563f1f5",
-            measurementId: "G-7KBF70TP2D"
+            appId: "1:750585646128:web:168c0926d3a6c90563f1f5"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // State Global
         let currentUserId = null;
         let currentRoomId = null;
         let isHost = false;
+        let timerInterval = null;
         let unsubscribeRoom = null;
-
-        // Configuration Locale
-        let localPlayerTotal = 4;
-        let localPlayerNames = ["Joueur 1", "Joueur 2", "Joueur 3", "Joueur 4", "Joueur 5", "Joueur 6", "Joueur 7", "Joueur 8", "Joueur 9", "Joueur 10"];
-        let localGameData = null;
-        let localCurrentIndex = 0;
-        let localSelectedPlayerId = null;
 
         const wordPairs = [
             { words: ["Lion", "Tigre"], hint: "C'est un grand félin sauvage." },
-            { words: ["Pizza", "Burger"], hint: "C'est un plat emblématique de la restauration rapide." },
-            { words: ["Avion", "Hélicoptère"], hint: "C'est un moyen de transport aérien." },
-            { words: ["Stylo", "Crayon"], hint: "C'est un outil utilisé pour écrire à la main." },
-            { words: ["Soleil", "Lune"], hint: "C'est un corps céleste visible dans notre ciel." },
-            { words: ["Pomme", "Poire"], hint: "C'est un fruit qui pousse dans un verger." },
-            { words: ["Football", "Basketball"], hint: "C'est un sport collectif qui se joue avec un ballon." },
-            { words: ["Chien", "Loup"], hint: "C'est un canidé." },
-            { words: ["Chocolat", "Vanille"], hint: "C'est un parfum classique pour les desserts." },
-            { words: ["Plage", "Piscine"], hint: "C'est un endroit où l'on va pour se baigner." },
-            { words: ["Cinéma", "Théâtre"], hint: "C'est un lieu culturel pour voir une performance." }
+            { words: ["Pizza", "Burger"], hint: "C'est un plat de fast-food." },
+            { words: ["Avion", "Fusée"], hint: "C'est un engin de vol." },
+            { words: ["Soleil", "Étoile"], hint: "C'est un astre lumineux." },
+            { words: ["Stylo", "Crayon"], hint: "C'est un outil pour écrire." }
         ];
 
-        // --- AUTH & SETUP ---
-        signInAnonymously(auth).catch(err => console.error("Erreur Auth:", err));
-        onAuthStateChanged(auth, u => { 
-            if(u) {
-                currentUserId = u.uid;
-                updateLocalSetupUI(); 
-            }
-        });
+        signInAnonymously(auth);
+        onAuthStateChanged(auth, u => { if(u) currentUserId = u.uid; });
 
-        window.switchMode = (mode) => {
-            const isOnline = mode === 'online';
-            document.getElementById('btn-mode-online').className = isOnline ? "flex-1 py-3 rounded-xl font-bold text-xs transition-all bg-indigo-600 text-white shadow-lg" : "flex-1 py-3 rounded-xl font-bold text-xs transition-all text-gray-400 hover:text-white";
-            document.getElementById('btn-mode-local').className = !isOnline ? "flex-1 py-3 rounded-xl font-bold text-xs transition-all bg-emerald-600 text-white shadow-lg" : "flex-1 py-3 rounded-xl font-bold text-xs transition-all text-gray-400 hover:text-white";
-            document.getElementById('section-online').classList.toggle('hidden', !isOnline);
-            document.getElementById('section-local').classList.toggle('hidden', isOnline);
+        window.switchMode = (m) => {
+            document.getElementById('section-online').classList.toggle('hidden', m !== 'online');
+            document.getElementById('section-local').classList.toggle('hidden', m !== 'local');
         };
 
-        // --- MODE ONLINE LOGIC ---
+        // --- GESTION DES SALONS (SYSTÈME COMPLET) ---
 
         window.createRoom = async () => {
-            const name = document.getElementById('player-name').value || "Joueur";
+            const name = document.getElementById('player-name').value || "Inconnu";
             const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
             currentRoomId = roomId;
             isHost = true;
-
-            const roomRef = doc(db, "rooms", roomId);
-            await setDoc(roomRef, {
+            await setDoc(doc(db, "rooms", roomId), {
                 id: roomId,
                 hostId: currentUserId,
-                players: [{ id: currentUserId, name: name, isHost: true }],
                 status: 'lobby',
-                settings: {
-                    impostorsCount: 1,
-                    hintsEnabled: true
-                }
+                players: [{ id: currentUserId, name, isHost: true, role: '', word: '', eliminated: false }],
+                settings: { impostorsCount: 1, hintsEnabled: true },
+                gameState: { phase: 'idle', words: [], currentSpeakerIndex: 0, timer: 0 }
             });
-
             listenToRoom(roomId);
         };
 
         window.joinRoom = async () => {
-            const name = document.getElementById('player-name').value || "Joueur";
+            const name = document.getElementById('player-name').value || "Inconnu";
             const roomId = document.getElementById('room-code-input').value.toUpperCase();
             if(!roomId) return;
-
-            const roomRef = doc(db, "rooms", roomId);
-            const snap = await getDoc(roomRef);
-            
-            if(snap.exists()) {
-                const data = snap.data();
-                if(data.status !== 'lobby') {
-                    alert("Partie déjà commencée !");
-                    return;
-                }
+            const snap = await getDoc(doc(db, "rooms", roomId));
+            if(snap.exists() && snap.data().status === 'lobby') {
                 currentRoomId = roomId;
-                isHost = (data.hostId === currentUserId);
-                await updateDoc(roomRef, {
-                    players: arrayUnion({ id: currentUserId, name: name, isHost: false })
+                await updateDoc(doc(db, "rooms", roomId), {
+                    players: arrayUnion({ id: currentUserId, name, isHost: false, role: '', word: '', eliminated: false })
                 });
                 listenToRoom(roomId);
             } else {
-                alert("Salon introuvable.");
+                alert("Salon introuvable ou déjà en cours.");
             }
         };
 
         function listenToRoom(roomId) {
             document.getElementById('view-hub').classList.add('hidden');
             document.getElementById('game-container').classList.remove('hidden');
-
+            
+            if(unsubscribeRoom) unsubscribeRoom();
             unsubscribeRoom = onSnapshot(doc(db, "rooms", roomId), (snap) => {
-                if(!snap.exists()) {
-                    alert("Le salon a été fermé.");
-                    window.resetToMenu();
-                    return;
-                }
+                if(!snap.exists()) return window.resetToMenu();
                 const data = snap.data();
                 
-                // Vérifier si on a été kické
+                // Vérification Kick
                 const me = data.players.find(p => p.id === currentUserId);
                 if(!me) {
                     alert("Tu as été expulsé du salon.");
-                    window.resetToMenu();
-                    return;
+                    return window.resetToMenu();
                 }
 
-                if(data.status === 'lobby') {
-                    renderLobby(data);
-                } else if(data.status === 'playing') {
-                    // Logic for playing state (coming soon)
-                }
+                isHost = data.hostId === currentUserId;
+                if(data.status === 'lobby') renderLobby(data);
+                else renderGame(data);
             });
         }
 
@@ -267,19 +188,51 @@
             await updateDoc(roomRef, { players });
         };
 
+        // --- LOGIQUE DE JEU ---
+
+        window.startGame = async () => {
+            const snap = await getDoc(doc(db, "rooms", currentRoomId));
+            const data = snap.data();
+            const pair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+            const players = [...data.players];
+            
+            // Attribution rôles
+            const impoIndices = [];
+            while(impoIndices.length < data.settings.impostorsCount) {
+                const r = Math.floor(Math.random() * players.length);
+                if(!impoIndices.includes(r)) impoIndices.push(r);
+            }
+
+            players.forEach((p, i) => {
+                p.role = impoIndices.includes(i) ? 'Imposteur' : 'Civil';
+                p.word = p.role === 'Civil' ? pair.words[0] : (data.settings.hintsEnabled ? pair.hint : '???');
+            });
+
+            await updateDoc(doc(db, "rooms", currentRoomId), {
+                status: 'playing',
+                players: players,
+                gameState: {
+                    phase: 'word_entry',
+                    currentSpeakerIndex: Math.floor(Math.random() * players.length),
+                    timer: Date.now() + 16000,
+                    words: []
+                }
+            });
+        };
+
         function renderLobby(data) {
             const settings = data.settings;
             document.getElementById('dynamic-content').innerHTML = `
-                <div class="space-y-6 animate-in fade-in duration-300">
-                    <div class="text-center">
+                <div class="space-y-6 text-center animate-in fade-in">
+                    <div>
                         <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Code du salon</p>
                         <h2 class="text-4xl font-black text-indigo-500 font-mono tracking-tighter">${data.id}</h2>
                     </div>
 
-                    <!-- Paramètres (Hôte seulement) -->
-                    <div class="glass p-6 rounded-3xl space-y-4 border-white/10">
+                    <!-- Paramètres -->
+                    <div class="glass p-6 rounded-3xl space-y-4 border-white/10 text-left">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold uppercase text-gray-400">Nombre d'imposteurs</span>
+                            <span class="text-xs font-bold uppercase text-gray-400">Imposteurs</span>
                             <div class="flex items-center gap-3">
                                 ${isHost ? `
                                     <button onclick="window.updateSettings('impostorsCount', Math.max(1, ${settings.impostorsCount}-1))" class="w-8 h-8 glass rounded-lg">-</button>
@@ -289,35 +242,29 @@
                             </div>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold uppercase text-gray-400">Indices autorisés</span>
+                            <span class="text-xs font-bold uppercase text-gray-400">Indices</span>
                             <label class="switch">
-                                <input type="checkbox" ${settings.hintsEnabled ? 'checked' : ''} 
-                                    ${!isHost ? 'disabled' : ''} 
-                                    onchange="window.updateSettings('hintsEnabled', this.checked)">
+                                <input type="checkbox" ${settings.hintsEnabled ? 'checked' : ''} ${!isHost ? 'disabled' : ''} onchange="window.updateSettings('hintsEnabled', this.checked)">
                                 <span class="slider"></span>
                             </label>
                         </div>
                     </div>
 
-                    <!-- Liste des joueurs -->
+                    <!-- Joueurs -->
                     <div class="space-y-2">
                         <div class="flex justify-between px-1">
                             <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Joueurs (${data.players.length})</label>
-                            <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Prêts ?</span>
                         </div>
                         <div class="grid grid-cols-1 gap-2">
                             ${data.players.map(p => `
                                 <div class="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/10">
                                     <div class="flex items-center gap-3">
-                                        <span class="text-lg">${p.isHost ? '👑' : '👤'}</span>
+                                        <span>${p.isHost ? '👑' : '👤'}</span>
                                         <span class="font-bold ${p.id === currentUserId ? 'text-indigo-400' : ''}">${p.name}</span>
                                     </div>
-                                    <div class="flex items-center gap-3">
-                                        ${isHost && p.id !== currentUserId ? `
-                                            <button onclick="window.kickPlayer('${p.id}')" class="text-red-500/50 hover:text-red-500 text-xl px-2">×</button>
-                                        ` : ''}
-                                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                    </div>
+                                    ${isHost && p.id !== currentUserId ? `
+                                        <button onclick="window.kickPlayer('${p.id}')" class="text-red-500 hover:text-red-400 font-bold px-2 text-xl">×</button>
+                                    ` : '<div class="w-2 h-2 rounded-full bg-emerald-500"></div>'}
                                 </div>
                             `).join('')}
                         </div>
@@ -325,214 +272,134 @@
 
                     <div class="pt-4 space-y-3">
                         ${isHost ? `
-                            <button class="w-full btn-gradient p-5 rounded-2xl font-black uppercase text-lg shadow-xl ${data.players.length < 3 ? 'opacity-50 grayscale cursor-not-allowed' : ''}">
-                                ${data.players.length < 3 ? 'Besoin de 3 joueurs min.' : 'Lancer la partie'}
+                            <button onclick="window.startGame()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase text-lg shadow-xl ${data.players.length < 3 ? 'opacity-50 grayscale cursor-not-allowed' : ''}">
+                                ${data.players.length < 3 ? 'Besoin de 3 joueurs' : 'Lancer la partie'}
                             </button>
-                        ` : `
-                            <div class="p-5 text-center glass rounded-2xl border-white/5 italic text-gray-500 text-sm">
-                                En attente de l'hôte...
-                            </div>
-                        `}
-                        <button onclick="window.resetToMenu()" class="w-full py-3 text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-white transition-colors">Quitter le salon</button>
+                        ` : `<div class="p-5 text-center glass rounded-2xl italic text-gray-500 text-sm">En attente de l'hôte...</div>`}
+                        <button onclick="window.resetToMenu()" class="w-full py-3 text-xs font-black text-gray-600 uppercase tracking-widest">Quitter</button>
                     </div>
                 </div>`;
         }
 
-        // --- MODE LOCAL LOGIC (RESTE DU CODE INCHANGÉ) ---
-
-        window.changeLocalPlayers = (val) => {
-            localPlayerTotal = Math.max(3, Math.min(10, localPlayerTotal + val));
-            updateLocalSetupUI();
-        };
-
-        window.resetToMenu = async () => {
-            if(unsubscribeRoom) unsubscribeRoom();
-            if(currentRoomId && isHost) {
-                // Optionnel: Supprimer le salon si l'hôte quitte
-                await deleteDoc(doc(db, "rooms", currentRoomId));
-            }
-            currentRoomId = null;
-            isHost = false;
-            document.getElementById('game-container').classList.add('hidden');
-            document.getElementById('view-hub').classList.remove('hidden');
-        };
-
-        function updateLocalSetupUI() {
-            const container = document.getElementById('local-names-container');
-            if(!container) return;
-            document.getElementById('local-player-count').innerText = localPlayerTotal;
-            container.innerHTML = "";
-            for (let i = 0; i < localPlayerTotal; i++) {
-                const input = document.createElement('input');
-                input.type = "text";
-                input.value = localPlayerNames[i];
-                input.className = "bg-white/5 p-3 rounded-xl border border-white/10 text-[10px] font-bold text-center text-white outline-none focus:border-emerald-500 transition-all";
-                input.oninput = (e) => { localPlayerNames[i] = e.target.value; };
-                container.appendChild(input);
-            }
-        }
-
-        window.startLocalGame = () => {
-            const pairObj = wordPairs[Math.floor(Math.random() * wordPairs.length)];
-            const pair = pairObj.words;
-            const impIdx = Math.floor(Math.random() * localPlayerTotal);
-            const allowHints = document.getElementById('local-hint-toggle').checked;
+        function renderGame(data) {
+            const me = data.players.find(p => p.id === currentUserId);
+            const speaker = data.players[data.gameState.currentSpeakerIndex];
+            const isMyTurn = speaker.id === currentUserId && data.gameState.phase === 'word_entry';
             
-            localGameData = {
-                players: Array.from({length: localPlayerTotal}, (_, i) => ({
-                    id: i + 1,
-                    name: localPlayerNames[i],
-                    role: i === impIdx ? 'Imposteur' : 'Civil',
-                    word: i === impIdx ? "???" : pair[0],
-                    isEliminated: false
-                })),
-                civilWord: pair[0],
-                hint: pairObj.hint,
-                hintEnabled: allowHints,
-                hintUsed: false
-            };
+            clearInterval(timerInterval);
+            const timeLeft = Math.max(0, Math.floor((data.gameState.timer - Date.now()) / 1000));
             
-            localCurrentIndex = 0;
-            document.getElementById('view-hub').classList.add('hidden');
-            document.getElementById('game-container').classList.remove('hidden');
-            renderLocalTurn();
-        };
-
-        function renderLocalTurn() {
-            const player = localGameData.players[localCurrentIndex];
-            const isLast = localCurrentIndex === localPlayerTotal - 1;
-            const isImpo = player.role === 'Imposteur';
-            const displayWord = (isImpo && localGameData.hintEnabled) ? localGameData.hint : player.word;
-
-            document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-8 animate-in fade-in duration-300">
-                    <h2 class="text-4xl font-black italic uppercase text-emerald-400">${player.name}</h2>
-                    <div class="w-72 h-96 mx-auto perspective-1000" onclick="this.querySelector('.card-inner').classList.toggle('is-flipped')">
-                        <div class="card-inner relative w-full h-full shadow-2xl rounded-[2.5rem]">
-                            <div class="backface-hidden absolute inset-0 glass rounded-[2.5rem] flex flex-col items-center justify-center border-2 border-dashed border-white/20">
-                                <p class="text-xs font-black uppercase text-indigo-400 animate-pulse-soft">Toucher pour révéler</p>
+            let html = `
+                <div class="space-y-4 animate-in fade-in">
+                    <!-- CARTE DU JOUEUR -->
+                    <div class="perspective-1000 w-full h-44 mb-6" onclick="this.querySelector('.card-inner').classList.toggle('is-flipped')">
+                        <div class="card-inner relative w-full h-full shadow-2xl rounded-[2rem]">
+                            <div class="backface-hidden absolute inset-0 glass rounded-[2rem] flex flex-col items-center justify-center border-2 border-dashed border-white/20">
+                                <span class="text-[10px] font-black uppercase text-indigo-400 animate-pulse-soft">Toucher pour révéler</span>
                             </div>
-                            <div class="backface-hidden absolute inset-0 ${isImpo ? 'bg-red-600' : 'bg-white'} rounded-[2.5rem] flex flex-col items-center justify-between py-12 px-6" style="transform: rotateY(180deg)">
-                                <h4 class="text-5xl font-black uppercase ${isImpo ? 'text-white' : 'text-slate-900'}">${player.role}</h4>
-                                <div class="w-full glass p-6 rounded-3xl bg-black/10">
-                                    <p class="${(isImpo && localGameData.hintEnabled) ? 'text-base italic' : 'text-3xl font-black'} uppercase ${isImpo ? 'text-white' : 'text-slate-800'}">
-                                        ${displayWord}
-                                    </p>
+                            <div class="backface-hidden absolute inset-0 ${me.role === 'Imposteur' ? 'bg-red-600' : 'bg-indigo-600'} rounded-[2rem] flex flex-col items-center justify-center p-6 text-center" style="transform: rotateY(180deg)">
+                                <h3 class="font-black text-2xl uppercase mb-2">${me.role}</h3>
+                                <div class="bg-black/20 p-4 rounded-2xl w-full">
+                                    <p class="text-xl font-bold uppercase">${me.word}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <button onclick="${isLast ? 'window.renderLocalDebate()' : 'window.nextLocalPlayer()'}" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase shadow-lg">
-                        ${isLast ? 'DÉBUTER LE DÉBAT' : 'JOUEUR SUIVANT'}
-                    </button>
+
+                    <!-- PHASE DE MOT -->
+                    ${data.gameState.phase === 'word_entry' ? `
+                        <div class="text-center space-y-4">
+                            <h2 class="text-xl font-black italic uppercase">Au tour de <span class="text-indigo-400">${speaker.name}</span></h2>
+                            <div class="relative h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                                <div id="timer-bar" class="progress-bar absolute h-full bg-indigo-500" style="width: ${(timeLeft/15)*100}%"></div>
+                            </div>
+                            
+                            ${isMyTurn ? `
+                                <div class="glass p-6 rounded-3xl space-y-4 border-indigo-500/30 animate-pulse-red">
+                                    <input type="text" id="word-input" maxlength="20" placeholder="Ton mot..." class="w-full bg-white/10 p-5 rounded-2xl text-center font-black text-2xl uppercase outline-none border border-white/20 focus:border-indigo-500 text-white">
+                                    <button onclick="window.sendWord()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase text-lg">Envoyer le mot</button>
+                                </div>
+                            ` : `
+                                <div class="glass p-12 rounded-[2rem] text-gray-500 italic flex items-center justify-center gap-3">
+                                    <div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div>
+                                    Réflexion en cours...
+                                </div>
+                            `}
+                        </div>
+                    ` : ''}
+
+                    <!-- PHASE DE VOTE -->
+                    ${data.gameState.phase === 'voting' ? `
+                        <div class="text-center space-y-4">
+                            <h2 class="text-3xl font-black text-red-500 uppercase italic">Le BANNISSEMENT</h2>
+                            <div class="grid grid-cols-2 gap-3">
+                                ${data.players.filter(p => !p.eliminated).map(p => `
+                                    <button onclick="window.voteFor('${p.id}')" class="p-5 glass rounded-2xl font-bold hover:bg-white/10 border border-white/5 transition-all">
+                                        ${p.name}
+                                    </button>
+                                `).join('')}
+                                <button onclick="window.voteFor('skip')" class="col-span-2 p-4 bg-white/5 rounded-2xl text-xs font-black uppercase tracking-widest text-gray-500">Passer le tour</button>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- FLUX DES MOTS -->
+                    <div class="space-y-3 mt-8">
+                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-white/5 pb-2">Journal de la partie</p>
+                        <div class="flex flex-col gap-2">
+                            ${data.gameState.words.map(w => `
+                                <div class="flex items-center gap-3 text-sm">
+                                    <span class="font-black text-indigo-400 uppercase text-[10px] min-w-[60px]">${w.name}:</span>
+                                    <span class="bg-white/5 px-4 py-2 rounded-xl border border-white/5 font-bold">${w.text}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
                 </div>`;
-        }
 
-        window.nextLocalPlayer = () => { localCurrentIndex++; renderLocalTurn(); };
+            document.getElementById('dynamic-content').innerHTML = html;
 
-        window.showLocalHint = () => {
-            localGameData.hintUsed = true;
-            const hintBox = document.getElementById('hint-display');
-            hintBox.innerHTML = `<p class="text-sm italic text-indigo-300 animate-in slide-in-from-top-2">${localGameData.hint}</p>`;
-            document.getElementById('btn-hint-trigger').classList.add('hidden');
-        };
-
-        window.renderLocalDebate = () => {
-            let hintUI = "";
-            if (localGameData.hintEnabled) {
-                hintUI = `<div id="hint-display" class="min-h-[20px]">
-                    ${localGameData.hintUsed ? `<p class="text-sm italic text-indigo-300">${localGameData.hint}</p>` : `
-                    <button id="btn-hint-trigger" onclick="window.showLocalHint()" class="text-[10px] font-black uppercase text-indigo-500/60 hover:text-indigo-400 tracking-widest transition-colors">
-                        🔍 Révéler un indice commun
-                    </button>`}
-                </div>`;
+            if(data.gameState.phase === 'word_entry') {
+                timerInterval = setInterval(() => {
+                    const bar = document.getElementById('timer-bar');
+                    const now = Date.now();
+                    const diff = data.gameState.timer - now;
+                    if(bar) bar.style.width = Math.max(0, (diff / 16000) * 100) + "%";
+                    if(diff <= 0 && isMyTurn) window.sendWord();
+                }, 1000);
             }
-
-            document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-6">
-                    <h2 class="text-4xl font-black italic uppercase">Le DéBAT</h2>
-                    ${hintUI}
-                    <button onclick="window.renderLocalVote()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase shadow-xl">Voter l'élimination</button>
-                    <div class="mt-8 pt-6 border-t border-white/10">
-                        <button onclick="window.renderImpostorAttempt()" class="w-full border-2 border-red-500/50 text-red-500 p-4 rounded-2xl font-black uppercase text-xs hover:bg-red-500/10 transition-all tracking-widest animate-pulse-red">
-                            TENTATIVE ULTIME ⚡
-                        </button>
-                    </div>
-                </div>`;
-        };
-
-        window.renderLocalVote = () => {
-            const players = localGameData.players;
-            document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-6">
-                    <h2 class="text-3xl font-black italic uppercase tracking-tighter">BANNISSEMENT</h2>
-                    <div class="grid grid-cols-2 gap-3">
-                        ${players.map(p => `
-                            <button id="vote-btn-${p.id}" onclick="window.handleVoteClick(${p.id})" 
-                                class="p-5 rounded-2xl border-2 font-bold transition-all ${p.isEliminated ? 'opacity-30 bg-gray-800 border-transparent' : 'bg-white/5 border-white/10'}"
-                                ${p.isEliminated ? 'disabled' : ''}>
-                                ${p.name}
-                            </button>
-                        `).join('')}
-                    </div>
-                    <button id="confirm-vote-btn" onclick="window.confirmElimination()" class="hidden w-full bg-red-600 p-4 rounded-2xl font-black uppercase shadow-lg">Éjecter du salon</button>
-                </div>`;
-        };
-
-        window.handleVoteClick = (id) => {
-            if (localSelectedPlayerId) document.getElementById(`vote-btn-${localSelectedPlayerId}`).classList.remove('selected-to-vote');
-            localSelectedPlayerId = id;
-            document.getElementById(`vote-btn-${id}`).classList.add('selected-to-vote');
-            document.getElementById('confirm-vote-btn').classList.remove('hidden');
-        };
-
-        window.confirmElimination = () => {
-            const player = localGameData.players.find(p => p.id === localSelectedPlayerId);
-            player.isEliminated = true;
-            localSelectedPlayerId = null;
-            if (player.role === 'Imposteur') window.renderImpostorAttempt(true); 
-            else if (localGameData.players.filter(p => !p.isEliminated && p.role === 'Civil').length <= 1) renderLocalGameEnd(false);
-            else window.renderLocalVote();
-        };
-
-        window.renderImpostorAttempt = (wasEliminated = false) => {
-            document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-8 animate-in slide-in-from-top-4 duration-500">
-                    <h2 class="text-5xl font-black italic text-red-500 uppercase leading-tight">TENTATIVE<br>ULTIME</h2>
-                    <div class="glass p-8 rounded-[2.5rem] border-red-500/20 shadow-2xl space-y-6">
-                        <div class="space-y-4">
-                            <input type="text" id="impo-guess-input" placeholder="LE MOT SECRET..." 
-                                class="w-full bg-white/10 p-5 rounded-2xl border border-white/10 text-center font-black text-2xl uppercase outline-none focus:border-red-500 transition-all text-white">
-                            <button onclick="window.checkImpostorGuess()" class="w-full btn-gradient p-5 rounded-2xl font-black text-lg uppercase shadow-xl tracking-widest">VALIDER LA TENTATIVE ULTIME ⚡</button>
-                        </div>
-                    </div>
-                </div>`;
-        };
-
-        window.checkImpostorGuess = () => {
-            const guess = document.getElementById('impo-guess-input').value.trim().toLowerCase();
-            const real = localGameData.civilWord.toLowerCase();
-            renderLocalGameEnd(guess !== real, guess === real);
-        };
-
-        function renderLocalGameEnd(civilsWin, stolen = false) {
-            const impo = localGameData.players.find(p => p.role === 'Imposteur');
-            document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-8 animate-in zoom-in duration-300">
-                    <h2 class="text-5xl font-black italic ${civilsWin ? 'text-emerald-400' : 'text-red-500'} leading-none uppercase">
-                        ${civilsWin ? 'CIVILS<br>VICTORIEUX' : (stolen ? 'MOT DÉROBÉ !' : "L'IMPOSTEUR<br>A GAGNÉ")}
-                    </h2>
-                    <div class="glass p-8 rounded-[2.5rem] border-white/5 shadow-2xl">
-                        <p class="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">L'Imposteur était</p>
-                        <p class="text-3xl font-black uppercase text-white mb-6">${impo.name}</p>
-                        <div class="pt-6 border-t border-white/5">
-                            <p class="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Le mot secret était</p>
-                            <p class="text-2xl font-black uppercase text-indigo-400">${localGameData.civilWord}</p>
-                        </div>
-                    </div>
-                    <button onclick="window.resetToMenu()" class="w-full bg-white text-slate-900 p-5 rounded-2xl font-black uppercase shadow-xl">RETOUR AU MENU</button>
-                </div>`;
         }
+
+        window.sendWord = async () => {
+            const input = document.getElementById('word-input');
+            const wordText = (input && input.value.trim()) ? input.value.trim() : "...";
+            const snap = await getDoc(doc(db, "rooms", currentRoomId));
+            const data = snap.data();
+            
+            const newWords = [...data.gameState.words, { name: data.players[data.gameState.currentSpeakerIndex].name, text: wordText }];
+            let nextIndex = (data.gameState.currentSpeakerIndex + 1) % data.players.length;
+            let nextPhase = (newWords.length % data.players.length === 0) ? 'voting' : 'word_entry';
+
+            await updateDoc(doc(db, "rooms", currentRoomId), {
+                "gameState.words": newWords,
+                "gameState.currentSpeakerIndex": nextIndex,
+                "gameState.phase": nextPhase,
+                "gameState.timer": Date.now() + 16000
+            });
+        };
+
+        window.voteFor = async (targetId) => {
+            await updateDoc(doc(db, "rooms", currentRoomId), {
+                "gameState.phase": 'word_entry',
+                "gameState.timer": Date.now() + 16000
+            });
+        };
+
+        window.resetToMenu = () => {
+            if(unsubscribeRoom) unsubscribeRoom();
+            location.reload();
+        };
+
     </script>
 </body>
 </html>
