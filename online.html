@@ -32,6 +32,8 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
         
         select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+        
+        .eliminated { text-decoration: line-through; opacity: 0.4; filter: grayscale(1); pointer-events: none; }
     </style>
 </head>
 <body class="p-4 flex flex-col items-center">
@@ -126,41 +128,53 @@
         </div>
     </div>
 
-    <!-- COMPTE A REBOURS Lancement -->
-    <div id="view-countdown" class="fixed inset-0 z-50 bg-black/95 hidden flex flex-col items-center justify-center">
-        <p class="text-indigo-500 font-black uppercase tracking-[0.5em] text-xs mb-4">La partie commence</p>
-        <div id="countdown-number" class="text-[30vw] md:text-[14rem] font-black italic tracking-tighter countdown-pulse leading-none">5</div>
+    <!-- OVERLAY GÉNÉRIQUE (Compte à rebours / Résultat Vote) -->
+    <div id="view-overlay" class="fixed inset-0 z-50 bg-black/95 hidden flex flex-col items-center justify-center text-center p-6">
+        <p id="overlay-label" class="text-indigo-500 font-black uppercase tracking-[0.5em] text-xs mb-4"></p>
+        <div id="overlay-main" class="text-[20vw] md:text-[10rem] font-black italic tracking-tighter countdown-pulse leading-none text-white"></div>
+        <p id="overlay-sub" class="mt-8 text-sm font-bold text-gray-400 uppercase tracking-widest"></p>
     </div>
 
     <!-- VUE JEU -->
     <div id="view-game" class="w-full max-w-md hidden fade-in py-8 space-y-6">
-        <!-- Carte Rôle -->
         <div id="my-role-card" class="w-full"></div>
 
-        <!-- ZONE D'ACTION TOUR PAR TOUR -->
-        <div id="turn-zone" class="glass p-6 rounded-3xl border-white/10 neon-border flex flex-col items-center space-y-4">
-            <div id="turn-info" class="text-center">
-                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tour de</p>
-                <p id="active-player-name" class="text-xl font-black text-indigo-400">---</p>
-            </div>
+        <!-- ZONE D'ACTION PRINCIPALE -->
+        <div id="game-main-zone" class="glass p-6 rounded-3xl border-white/10 neon-border flex flex-col items-center space-y-4">
             
-            <!-- Interface de saisie d'indice -->
-            <div id="clue-input-area" class="hidden w-full space-y-3">
-                <div class="flex justify-between items-center">
-                    <p class="text-[9px] font-bold text-indigo-300 uppercase">Donne ton indice !</p>
-                    <div id="turn-timer" class="w-8 h-8 rounded-full border-2 border-indigo-500 flex items-center justify-center text-xs font-black text-white">10</div>
+            <!-- Phase INDICE -->
+            <div id="phase-clue" class="w-full space-y-4 hidden">
+                <div id="turn-info" class="text-center">
+                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tour de</p>
+                    <p id="active-player-name" class="text-xl font-black text-indigo-400">---</p>
                 </div>
-                <div class="flex gap-2">
-                    <input type="text" id="clue-input" maxlength="20" placeholder="Ton mot..." class="flex-1 bg-white/5 rounded-xl border border-white/10 p-3 text-sm outline-none focus:border-indigo-500 transition-all text-white">
-                    <button onclick="submitClue()" class="bg-indigo-600 px-6 py-3 rounded-xl text-white font-bold text-xs uppercase">Envoyer</button>
+                
+                <div id="clue-input-area" class="hidden w-full space-y-3">
+                    <div class="flex justify-between items-center">
+                        <p class="text-[9px] font-bold text-indigo-300 uppercase">Donne ton indice !</p>
+                        <div id="turn-timer" class="w-8 h-8 rounded-full border-2 border-indigo-500 flex items-center justify-center text-xs font-black text-white">10</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="clue-input" maxlength="20" placeholder="Ton mot..." class="flex-1 bg-white/5 rounded-xl border border-white/10 p-3 text-sm outline-none focus:border-indigo-500 transition-all text-white">
+                        <button onclick="submitClue()" class="bg-indigo-600 px-6 py-3 rounded-xl text-white font-bold text-xs uppercase">OK</button>
+                    </div>
                 </div>
+                <div id="wait-msg" class="text-[10px] text-gray-500 italic text-center">Attends ton tour...</div>
             </div>
 
-            <div id="wait-msg" class="text-[10px] text-gray-500 italic">Attends ton tour...</div>
+            <!-- Phase VOTE -->
+            <div id="phase-vote" class="w-full space-y-4 hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xl font-black italic text-red-500 uppercase">VOTEZ !</h3>
+                    <div id="vote-timer" class="text-lg font-black text-white bg-red-600/20 px-3 py-1 rounded-lg border border-red-500/30">30</div>
+                </div>
+                <div id="vote-options" class="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto custom-scroll pr-1"></div>
+                <button onclick="castVote('skip')" id="btn-skip-vote" class="w-full p-3 glass rounded-xl text-[10px] font-black uppercase text-gray-400 border-dashed border-white/10">Passer le vote (Skip)</button>
+            </div>
         </div>
 
         <div class="space-y-3">
-            <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Liste des indices</h3>
+            <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Joueurs & Indices</h3>
             <div id="game-player-list" class="space-y-2"></div>
         </div>
 
@@ -171,48 +185,31 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // CONFIGURATION FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyBrn4qChbtsZzP7nMKA5GGR7K024pFxtf0",
-            authDomain: "rogarsimpostorcards.firebaseapp.com",
-            projectId: "rogarsimpostorcards",
-            storageBucket: "rogarsimpostorcards.firebasestorage.app",
-            messagingSenderId: "750585646128",
-            appId: "1:750585646128:web:168c0926d3a6c90563f1f5",
-            measurementId: "G-7KBF70TP2D"
-        };
-
+        const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'rogar-v2';
 
-        let currentUser = null;
-        let currentRoomId = null;
-        let isHost = false;
-        let roomData = null;
-        let playerName = "";
-        let countdownRunning = false;
-        let unsubscribeRoom = null;
+        let currentUser = null, currentRoomId = null, isHost = false, roomData = null, playerName = "";
         let timerInterval = null;
 
         const wordPacks = {
-            animals: [{ civ: "Lion", impo: "Tigre" }, { civ: "Chien", impo: "Loup" }, { civ: "Aigle", impo: "Faucon" }],
+            animals: [{ civ: "Lion", impo: "Tigre" }, { civ: "Chien", impo: "Loup" }, { civ: "Chat", impo: "Lynx" }],
             food: [{ civ: "Pizza", impo: "Burger" }, { civ: "Pâtes", impo: "Riz" }, { civ: "Pomme", impo: "Poire" }],
-            objects: [{ civ: "Avion", impo: "Hélicoptère" }, { civ: "Vélo", impo: "Moto" }, { civ: "Table", impo: "Bureau" }],
+            objects: [{ civ: "Avion", impo: "Hélicoptère" }, { civ: "Stylo", impo: "Crayon" }, { civ: "Vélo", impo: "Moto" }],
             mix: []
         };
         wordPacks.mix = [...wordPacks.animals, ...wordPacks.food, ...wordPacks.objects];
 
         const initSession = async () => {
-            try {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
                 await signInAnonymously(auth);
-            } catch (err) { 
-                console.error("Erreur d'auth:", err);
-                document.getElementById('auth-status').innerText = "Erreur de connexion ❌";
             }
         };
 
@@ -230,256 +227,266 @@
         window.showJoinInput = () => document.getElementById('join-container').classList.toggle('hidden');
 
         window.createRoom = async () => {
-            if (!currentUser) return;
             playerName = document.getElementById('player-name').value.trim() || "Joueur";
             const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
             currentRoomId = roomId;
             isHost = true;
-            try {
-                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-                await setDoc(roomRef, {
-                    id: roomId, 
-                    status: 'waiting', 
-                    players: [{ uid: currentUser.uid, name: playerName, isHost: true, eliminated: false, clue: "" }],
-                    messages: [{ sender: "Système", text: "Salon créé !" }],
-                    hostId: currentUser.uid,
-                    activePlayerIdx: 0,
-                    config: { theme: 'mix', maxPlayers: 8 } 
-                });
-                enterLobby(roomId);
-            } catch (err) { console.error(err); }
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId), {
+                id: roomId, status: 'waiting', hostId: currentUser.uid, activePlayerIdx: 0,
+                players: [{ uid: currentUser.uid, name: playerName, isHost: true, eliminated: false, clue: "" }],
+                messages: [{ sender: "Système", text: "Salon créé !" }],
+                config: { theme: 'mix', maxPlayers: 8 }, turnStartTime: Date.now(), votesReceived: {}
+            });
+            enterLobby(roomId);
         };
 
         window.joinRoom = async () => {
-            if (!currentUser) return;
             playerName = document.getElementById('player-name').value.trim() || "Invité";
             const roomId = document.getElementById('room-code-input').value.trim().toUpperCase();
-            if (!roomId) return;
-            try {
-                const ref = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-                const snap = await getDoc(ref);
-                if (!snap.exists()) return alert("Salon introuvable");
-                const data = snap.data();
-                if (data.players.length >= data.config.maxPlayers) return alert("Salon plein !");
-                await updateDoc(ref, { 
-                    players: arrayUnion({ uid: currentUser.uid, name: playerName, isHost: false, eliminated: false, clue: "" }) 
-                });
-                currentRoomId = roomId;
-                enterLobby(roomId);
-            } catch (err) { console.error(err); }
+            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return alert("Salon introuvable");
+            const data = snap.data();
+            if (data.players.length >= data.config.maxPlayers) return alert("Salon plein !");
+            await updateDoc(ref, { 
+                players: arrayUnion({ uid: currentUser.uid, name: playerName, isHost: false, eliminated: false, clue: "" }) 
+            });
+            currentRoomId = roomId;
+            enterLobby(roomId);
         };
 
         const enterLobby = (roomId) => {
             document.getElementById('view-setup').classList.add('hidden');
             document.getElementById('view-lobby').classList.remove('hidden');
             document.getElementById('display-room-code').innerText = roomId;
-            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-            if (unsubscribeRoom) unsubscribeRoom();
-            unsubscribeRoom = onSnapshot(roomRef, (snapshot) => {
-                if (!snapshot.exists()) return;
-                const prevStatus = roomData?.status;
-                const prevIdx = roomData?.activePlayerIdx;
-                roomData = snapshot.data();
+            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId), (snap) => {
+                if (!snap.exists()) return;
+                const oldStatus = roomData?.status;
+                const oldIdx = roomData?.activePlayerIdx;
+                roomData = snap.data();
                 isHost = roomData.hostId === currentUser.uid;
                 
-                document.getElementById('host-config-panel').classList.toggle('hidden', !isHost);
-                document.getElementById('host-controls').classList.toggle('hidden', !isHost);
+                updateUI();
                 
-                if (isHost && roomData.status === 'waiting') {
-                    document.getElementById('lobby-config-theme').value = roomData.config.theme;
-                    document.getElementById('lobby-config-max').value = roomData.config.maxPlayers;
-                }
-
-                document.getElementById('badge-theme').innerText = `Thème: ${roomData.config.theme}`;
-                document.getElementById('badge-max').innerText = `Max: ${roomData.config.maxPlayers}`;
-                document.getElementById('player-count').innerText = `${roomData.players.length}/${roomData.config.maxPlayers}`;
-
-                updateLobbyUI();
-                
-                if (roomData.status === 'starting' && !countdownRunning) startCountdown();
+                if (roomData.status === 'starting' && oldStatus !== 'starting') showOverlay("Lancement", "5", "Préparez-vous...");
                 if (roomData.status === 'playing') {
-                    showGameView();
-                    // Si le joueur actif change, reset le timer localement
-                    if (prevIdx !== roomData.activePlayerIdx) {
-                        startTurnTimer();
-                    }
+                    if (oldIdx !== roomData.activePlayerIdx || oldStatus !== 'playing') startTimer('turn-timer', 10, () => submitClue("TEMPS ÉCOULÉ"));
                 }
-                if (roomData.status === 'waiting' && prevStatus === 'playing') {
-                    document.getElementById('view-game').classList.add('hidden');
-                    document.getElementById('view-lobby').classList.remove('hidden');
-                    clearInterval(timerInterval);
+                if (roomData.status === 'voting') {
+                    if (oldStatus !== 'voting') startTimer('vote-timer', 30, endVote);
+                    const aliveCount = roomData.players.filter(p => !p.eliminated).length;
+                    if (isHost && Object.keys(roomData.votesReceived || {}).length >= aliveCount) endVote();
                 }
+                if (roomData.status === 'result' && oldStatus !== 'result') displayElimination();
             });
         };
 
-        window.updateRoomConfig = async () => {
-            if (!isHost || !currentRoomId) return;
-            const theme = document.getElementById('lobby-config-theme').value;
-            const maxPlayers = parseInt(document.getElementById('lobby-config-max').value);
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
-                config: { theme, maxPlayers }
-            });
-        };
-
-        const updateLobbyUI = () => {
-            document.getElementById('player-list').innerHTML = roomData.players.map(p => `
-                <div class="px-3 py-1 bg-white/5 rounded-full border border-white/10 text-[10px] font-bold">
-                    ${p.isHost ? '👑 ' : ''}${p.name}
-                </div>
-            `).join('');
+        const updateUI = () => {
+            document.getElementById('badge-theme').innerText = `Thème: ${roomData.config.theme}`;
+            document.getElementById('badge-max').innerText = `Max: ${roomData.config.maxPlayers}`;
+            document.getElementById('player-count').innerText = `${roomData.players.length}/${roomData.config.maxPlayers}`;
+            document.getElementById('player-list').innerHTML = roomData.players.map(p => `<div class="px-3 py-1 bg-white/5 rounded-full border border-white/10 text-[10px] font-bold">${p.isHost ? '👑 ' : ''}${p.name}</div>`).join('');
+            
             const chatBox = document.getElementById('chat-messages');
-            chatBox.innerHTML = (roomData.messages || []).map(m => `
-                <div class="text-xs">
-                    <span class="font-black text-indigo-400">${m.sender}:</span>
-                    <span class="text-gray-300 ml-1">${m.text}</span>
+            chatBox.innerHTML = (roomData.messages || []).map(m => `<div class="text-xs"><span class="font-black text-indigo-400">${m.sender}:</span><span class="text-gray-300 ml-1">${m.text}</span></div>`).join('');
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            document.getElementById('host-config-panel').classList.toggle('hidden', !isHost || roomData.status !== 'waiting');
+            document.getElementById('host-controls').classList.toggle('hidden', !isHost || roomData.status !== 'waiting');
+
+            if (roomData.status === 'playing' || roomData.status === 'voting' || roomData.status === 'result') {
+                document.getElementById('view-lobby').classList.add('hidden');
+                document.getElementById('view-game').classList.remove('hidden');
+                renderGame();
+            } else {
+                document.getElementById('view-game').classList.add('hidden');
+                document.getElementById('view-lobby').classList.remove('hidden');
+            }
+        };
+
+        const renderGame = () => {
+            const me = roomData.players.find(p => p.uid === currentUser.uid);
+            const activePlayer = roomData.players[roomData.activePlayerIdx];
+            
+            document.getElementById('my-role-card').innerHTML = `
+                <div class="glass p-6 rounded-[2rem] border-white/10 text-center ${me.role === 'Imposteur' ? 'bg-red-500/10' : 'bg-indigo-500/10'}">
+                    <p class="text-[10px] font-bold text-gray-500 uppercase mb-1">Tu es</p>
+                    <h2 class="text-2xl font-black italic ${me.role === 'Imposteur' ? 'text-red-500' : 'text-indigo-400'}">${me.role}</h2>
+                    <p class="mt-2 text-xl font-black tracking-widest text-white uppercase">${me.word}</p>
+                </div>
+            `;
+
+            document.getElementById('phase-clue').classList.toggle('hidden', roomData.status !== 'playing');
+            document.getElementById('phase-vote').classList.toggle('hidden', roomData.status !== 'voting');
+
+            if (roomData.status === 'playing') {
+                document.getElementById('active-player-name').innerText = activePlayer.uid === currentUser.uid ? "À TOI !" : activePlayer.name;
+                document.getElementById('clue-input-area').classList.toggle('hidden', activePlayer.uid !== currentUser.uid);
+                document.getElementById('wait-msg').classList.toggle('hidden', activePlayer.uid === currentUser.uid);
+            }
+
+            if (roomData.status === 'voting') {
+                const alreadyVoted = roomData.votesReceived[currentUser.uid];
+                document.getElementById('btn-skip-vote').disabled = !!alreadyVoted;
+                document.getElementById('vote-options').innerHTML = roomData.players
+                    .filter(p => !p.eliminated)
+                    .map(p => `
+                        <button onclick="castVote('${p.uid}')" ${alreadyVoted || p.uid === currentUser.uid ? 'disabled' : ''} 
+                            class="p-4 glass rounded-2xl font-bold text-sm uppercase flex justify-between items-center ${alreadyVoted === p.uid ? 'border-indigo-500 bg-indigo-500/10' : 'border-white/5'}">
+                            <span>${p.name} ${p.uid === currentUser.uid ? '(Toi)' : ''}</span>
+                        </button>
+                    `).join('');
+            }
+
+            document.getElementById('game-player-list').innerHTML = roomData.players.map(p => `
+                <div class="p-3 glass rounded-2xl flex justify-between items-center border-white/5 ${p.eliminated ? 'eliminated' : ''} ${roomData.status === 'playing' && activePlayer.uid === p.uid ? 'ring-1 ring-indigo-500' : ''}">
+                    <span class="font-bold text-sm text-gray-200">${p.name}</span>
+                    <span class="text-[10px] font-black text-indigo-300 uppercase italic">${p.eliminated ? 'ÉLIMINÉ' : (p.clue || '...')}</span>
                 </div>
             `).join('');
-            chatBox.scrollTop = chatBox.scrollHeight;
+            if (isHost) document.getElementById('game-host-actions').classList.remove('hidden');
+        };
+
+        const startTimer = (elementId, duration, onEnd) => {
+            clearInterval(timerInterval);
+            const el = document.getElementById(elementId);
+            const tick = () => {
+                const elapsed = Math.floor((Date.now() - roomData.turnStartTime) / 1000);
+                const left = Math.max(0, duration - elapsed);
+                if (el) el.innerText = left;
+                if (left <= 0) {
+                    clearInterval(timerInterval);
+                    if (isHost && onEnd) onEnd();
+                }
+            };
+            timerInterval = setInterval(tick, 1000);
+            tick();
+        };
+
+        window.submitClue = async (forced = null) => {
+            const input = document.getElementById('clue-input');
+            const clue = forced || input.value.trim();
+            if (!clue) return;
+            const players = [...roomData.players];
+            players[roomData.activePlayerIdx].clue = clue;
+            let nextIdx = roomData.activePlayerIdx + 1;
+            while(nextIdx < players.length && players[nextIdx].eliminated) nextIdx++;
+            let newStatus = 'playing';
+            if (nextIdx >= players.length) {
+                newStatus = 'voting';
+                nextIdx = players.findIndex(p => !p.eliminated);
+            }
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
+                players, status: newStatus, activePlayerIdx: nextIdx, turnStartTime: Date.now(), votesReceived: {}
+            });
+            input.value = "";
+        };
+
+        window.castVote = async (targetUid) => {
+            if (roomData.votesReceived[currentUser.uid]) return;
+            const newVotes = { ...roomData.votesReceived, [currentUser.uid]: targetUid };
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { votesReceived: newVotes });
+        };
+
+        window.endVote = async () => {
+            if (!isHost) return;
+            const tallies = {};
+            Object.values(roomData.votesReceived).forEach(v => { if (v !== 'skip') tallies[v] = (tallies[v] || 0) + 1; });
+            let max = 0, loser = null;
+            for (const [u, c] of Object.entries(tallies)) {
+                if (c > max) { max = c; loser = u; }
+                else if (c === max) loser = null;
+            }
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
+                status: 'result', loserUid: loser, turnStartTime: Date.now()
+            });
+        };
+
+        const displayElimination = () => {
+            const loser = roomData.players.find(p => p.uid === roomData.loserUid);
+            const overlay = document.getElementById('view-overlay');
+            overlay.classList.remove('hidden');
+            document.getElementById('overlay-label').innerText = "Résultat du vote";
+            if (loser) {
+                document.getElementById('overlay-main').innerText = loser.name;
+                document.getElementById('overlay-sub').innerText = `ÉTAIT ${loser.role.toUpperCase()}`;
+                document.getElementById('overlay-main').style.color = loser.role === 'Imposteur' ? '#ef4444' : '#6366f1';
+            } else {
+                document.getElementById('overlay-main').innerText = "ÉGALITÉ";
+                document.getElementById('overlay-sub').innerText = "Personne n'est éliminé";
+                document.getElementById('overlay-main').style.color = "white";
+            }
+
+            if (isHost) {
+                setTimeout(async () => {
+                    const players = roomData.players.map(p => {
+                        if (p.uid === roomData.loserUid) return { ...p, eliminated: true };
+                        return { ...p, clue: "" };
+                    });
+                    const remImpo = players.filter(p => p.role === 'Imposteur' && !p.eliminated).length;
+                    const remCiv = players.filter(p => p.role === 'Civil' && !p.eliminated).length;
+                    if (remImpo === 0 || remCiv <= remImpo) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { status: 'waiting' });
+                    } else {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
+                            status: 'playing', players, activePlayerIdx: players.findIndex(p => !p.eliminated), turnStartTime: Date.now(), votesReceived: {}
+                        });
+                    }
+                    overlay.classList.add('hidden');
+                }, 5000);
+            } else {
+                setTimeout(() => overlay.classList.add('hidden'), 5000);
+            }
+        };
+
+        const showOverlay = (label, main, sub) => {
+            const overlay = document.getElementById('view-overlay');
+            overlay.classList.remove('hidden');
+            document.getElementById('overlay-label').innerText = label;
+            document.getElementById('overlay-main').innerText = main;
+            document.getElementById('overlay-sub').innerText = sub;
+            if (label === "Lancement") {
+                let c = 5;
+                const int = setInterval(() => {
+                    c--;
+                    document.getElementById('overlay-main').innerText = c;
+                    if (c <= 0) {
+                        clearInterval(int);
+                        overlay.classList.add('hidden');
+                        if (isHost) startGameLogic();
+                    }
+                }, 1000);
+            }
+        };
+
+        const startGameLogic = async () => {
+            const pack = wordPacks[roomData.config.theme] || wordPacks.mix;
+            const pair = pack[Math.floor(Math.random()*pack.length)];
+            let players = [...roomData.players].sort(() => Math.random() - 0.5);
+            players = players.map((p, i) => ({
+                ...p, role: i === 0 ? 'Imposteur' : 'Civil', word: i === 0 ? pair.impo : pair.civ, eliminated: false, clue: ""
+            }));
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
+                status: 'playing', players, activePlayerIdx: 0, turnStartTime: Date.now()
+            });
         };
 
         window.sendMessage = async () => {
             const input = document.getElementById('chat-input');
-            if (!input.value.trim() || !currentRoomId) return;
+            if (!input.value.trim()) return;
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
                 messages: arrayUnion({ sender: playerName, text: input.value.trim() })
             });
             input.value = "";
         };
 
-        window.triggerCountdown = async () => {
-            if (!isHost) return;
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { status: 'starting' });
+        window.triggerCountdown = async () => { if (isHost) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { status: 'starting' }); };
+        window.updateRoomConfig = async () => {
+            const theme = document.getElementById('lobby-config-theme').value;
+            const maxPlayers = parseInt(document.getElementById('lobby-config-max').value);
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { config: { theme, maxPlayers } });
         };
-
-        const startCountdown = () => {
-            countdownRunning = true;
-            const overlay = document.getElementById('view-countdown');
-            const num = document.getElementById('countdown-number');
-            overlay.classList.remove('hidden');
-            let count = 5;
-            num.innerText = count;
-            const timer = setInterval(() => {
-                count--;
-                if (count <= 0) {
-                    clearInterval(timer);
-                    num.innerText = "GO!";
-                    setTimeout(() => {
-                        overlay.classList.add('hidden');
-                        countdownRunning = false;
-                        if (isHost) startGameLogic();
-                    }, 800);
-                } else { num.innerText = count; }
-            }, 1000);
-        };
-
-        const startGameLogic = async () => {
-            if (!isHost) return;
-            const pack = wordPacks[roomData.config.theme] || wordPacks.mix;
-            const pair = pack[Math.floor(Math.random()*pack.length)];
-            let players = [...roomData.players].sort(() => Math.random() - 0.5);
-            players = players.map((p, i) => ({
-                ...p,
-                role: i === 0 ? 'Imposteur' : 'Civil',
-                word: i === 0 ? pair.impo : pair.civ,
-                clue: ""
-            }));
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
-                status: 'playing', players, activePlayerIdx: 0
-            });
-        };
-
-        const showGameView = () => {
-            document.getElementById('view-lobby').classList.add('hidden');
-            document.getElementById('view-game').classList.remove('hidden');
-            if (isHost) document.getElementById('game-host-actions').classList.remove('hidden');
-
-            const me = roomData.players.find(p => p.uid === currentUser.uid);
-            if (!me) return;
-            const isImpo = me.role === 'Imposteur';
-            const activePlayer = roomData.players[roomData.activePlayerIdx];
-
-            // Rôle
-            document.getElementById('my-role-card').innerHTML = `
-                <div class="glass p-6 rounded-[2rem] border-white/10 text-center fade-in ${isImpo ? 'bg-red-500/10 border-red-500/30' : 'bg-indigo-500/10 border-indigo-500/30'}">
-                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Tu es</p>
-                    <h2 class="text-3xl font-black italic uppercase ${isImpo ? 'text-red-500' : 'text-indigo-400'}">${me.role}</h2>
-                    <div class="mt-4 bg-black/40 p-4 rounded-2xl border border-white/5 inline-block min-w-[150px]">
-                        <p class="text-[9px] font-bold opacity-40 uppercase mb-1">Mot Secret</p>
-                        <p class="text-xl font-black uppercase tracking-tighter text-white">${me.word}</p>
-                    </div>
-                </div>
-            `;
-
-            // Zone de tour
-            document.getElementById('active-player-name').innerText = activePlayer.uid === currentUser.uid ? "TOI !" : activePlayer.name;
-            const isMyTurn = activePlayer.uid === currentUser.uid;
-            document.getElementById('clue-input-area').classList.toggle('hidden', !isMyTurn);
-            document.getElementById('wait-msg').classList.toggle('hidden', isMyTurn);
-
-            // Liste des joueurs avec leurs indices
-            document.getElementById('game-player-list').innerHTML = roomData.players.map(p => `
-                <div class="p-4 glass rounded-2xl flex justify-between items-center border-white/5 ${activePlayer.uid === p.uid ? 'ring-2 ring-indigo-500/50' : ''}">
-                    <div class="flex items-center gap-3">
-                        <div class="w-2 h-2 rounded-full ${activePlayer.uid === p.uid ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]' : 'bg-green-500'}"></div>
-                        <span class="font-bold text-sm text-gray-200">${p.name}</span>
-                    </div>
-                    <div class="bg-indigo-500/20 px-3 py-1 rounded-lg border border-indigo-500/20">
-                         <span class="text-[10px] font-black text-indigo-300 uppercase italic">${p.clue || '...'}</span>
-                    </div>
-                </div>
-            `).join('');
-        };
-
-        const startTurnTimer = () => {
-            clearInterval(timerInterval);
-            const activePlayer = roomData.players[roomData.activePlayerIdx];
-            if (!activePlayer) return;
-
-            let timeLeft = 10;
-            const timerEl = document.getElementById('turn-timer');
-            if (timerEl) timerEl.innerText = timeLeft;
-
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                if (timerEl) timerEl.innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    if (activePlayer.uid === currentUser.uid) {
-                        submitClue("TEMPS ÉCOULÉ");
-                    }
-                }
-            }, 1000);
-        };
-
-        window.submitClue = async (forcedClue = null) => {
-            const input = document.getElementById('clue-input');
-            const clue = forcedClue || input.value.trim();
-            if (!clue && !forcedClue) return;
-            
-            clearInterval(timerInterval);
-            input.value = "";
-
-            const updatedPlayers = [...roomData.players];
-            updatedPlayers[roomData.activePlayerIdx].clue = clue;
-
-            // Passer au joueur suivant
-            let nextIdx = roomData.activePlayerIdx + 1;
-            if (nextIdx >= updatedPlayers.length) {
-                // Tout le monde a joué, on peut rester sur le dernier ou loop
-                nextIdx = 0; 
-                // Optionnel: On pourrait trigger la phase de vote ici
-            }
-
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
-                players: updatedPlayers,
-                activePlayerIdx: nextIdx
-            });
-        };
-
-        window.resetToLobby = async () => {
-            if (!isHost) return;
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { status: 'waiting' });
-        };
+        window.resetToLobby = async () => { if (isHost) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { status: 'waiting' }); };
 
         initSession();
     </script>
