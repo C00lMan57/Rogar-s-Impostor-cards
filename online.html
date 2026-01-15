@@ -44,7 +44,7 @@
         </header>
 
         <div id="auth-status" class="text-[10px] font-bold text-yellow-400 bg-yellow-500/10 px-4 py-1 rounded-full border border-yellow-500/20 text-center">
-            En attente de configuration...
+            Connexion au serveur...
         </div>
 
         <div class="w-full glass p-6 rounded-3xl space-y-6 shadow-2xl border-white/5 neon-border">
@@ -85,7 +85,7 @@
                 </div>
             </div>
 
-            <!-- CONFIGURATION (VISIBLE SEULEMENT POUR L'HOTE DANS LE LOBBY) -->
+            <!-- CONFIGURATION (HOTE UNIQUEMENT) -->
             <div id="host-config-panel" class="hidden grid grid-cols-2 gap-3 mb-6 p-4 bg-white/5 rounded-2xl border border-white/5">
                 <div class="col-span-2 mb-1">
                     <p class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Paramètres de l'hôte</p>
@@ -126,7 +126,7 @@
         </div>
     </div>
 
-    <!-- COMPTE A REBOURS -->
+    <!-- COMPTE A REBOURS Lancement -->
     <div id="view-countdown" class="fixed inset-0 z-50 bg-black/95 hidden flex flex-col items-center justify-center">
         <p class="text-indigo-500 font-black uppercase tracking-[0.5em] text-xs mb-4">La partie commence</p>
         <div id="countdown-number" class="text-[30vw] md:text-[14rem] font-black italic tracking-tighter countdown-pulse leading-none">5</div>
@@ -134,11 +134,36 @@
 
     <!-- VUE JEU -->
     <div id="view-game" class="w-full max-w-md hidden fade-in py-8 space-y-6">
+        <!-- Carte Rôle -->
         <div id="my-role-card" class="w-full"></div>
+
+        <!-- ZONE D'ACTION TOUR PAR TOUR -->
+        <div id="turn-zone" class="glass p-6 rounded-3xl border-white/10 neon-border flex flex-col items-center space-y-4">
+            <div id="turn-info" class="text-center">
+                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tour de</p>
+                <p id="active-player-name" class="text-xl font-black text-indigo-400">---</p>
+            </div>
+            
+            <!-- Interface de saisie d'indice -->
+            <div id="clue-input-area" class="hidden w-full space-y-3">
+                <div class="flex justify-between items-center">
+                    <p class="text-[9px] font-bold text-indigo-300 uppercase">Donne ton indice !</p>
+                    <div id="turn-timer" class="w-8 h-8 rounded-full border-2 border-indigo-500 flex items-center justify-center text-xs font-black text-white">10</div>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="clue-input" maxlength="20" placeholder="Ton mot..." class="flex-1 bg-white/5 rounded-xl border border-white/10 p-3 text-sm outline-none focus:border-indigo-500 transition-all text-white">
+                    <button onclick="submitClue()" class="bg-indigo-600 px-6 py-3 rounded-xl text-white font-bold text-xs uppercase">Envoyer</button>
+                </div>
+            </div>
+
+            <div id="wait-msg" class="text-[10px] text-gray-500 italic">Attends ton tour...</div>
+        </div>
+
         <div class="space-y-3">
-            <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Survivants</h3>
+            <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Liste des indices</h3>
             <div id="game-player-list" class="space-y-2"></div>
         </div>
+
         <div id="game-host-actions" class="hidden pt-6">
              <button onclick="resetToLobby()" class="w-full p-4 glass rounded-2xl text-[10px] font-black uppercase text-gray-500 border-dashed border-white/10">Arrêter la partie</button>
         </div>
@@ -146,20 +171,19 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- REMPLISSEZ CETTE SECTION AVEC VOS COORDONNÉES FIREBASE ---
+        // CONFIGURATION FIREBASE
         const firebaseConfig = {
-  apiKey: "AIzaSyBrn4qChbtsZzP7nMKA5GGR7K024pFxtf0",
-  authDomain: "rogarsimpostorcards.firebaseapp.com",
-  projectId: "rogarsimpostorcards",
-  storageBucket: "rogarsimpostorcards.firebasestorage.app",
-  messagingSenderId: "750585646128",
-  appId: "1:750585646128:web:168c0926d3a6c90563f1f5",
-  measurementId: "G-7KBF70TP2D"
-};
-        // -------------------------------------------------------------
+            apiKey: "AIzaSyBrn4qChbtsZzP7nMKA5GGR7K024pFxtf0",
+            authDomain: "rogarsimpostorcards.firebaseapp.com",
+            projectId: "rogarsimpostorcards",
+            storageBucket: "rogarsimpostorcards.firebasestorage.app",
+            messagingSenderId: "750585646128",
+            appId: "1:750585646128:web:168c0926d3a6c90563f1f5",
+            measurementId: "G-7KBF70TP2D"
+        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -173,6 +197,7 @@
         let playerName = "";
         let countdownRunning = false;
         let unsubscribeRoom = null;
+        let timerInterval = null;
 
         const wordPacks = {
             animals: [{ civ: "Lion", impo: "Tigre" }, { civ: "Chien", impo: "Loup" }, { civ: "Aigle", impo: "Faucon" }],
@@ -184,21 +209,17 @@
 
         const initSession = async () => {
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
             } catch (err) { 
-                console.error(err);
-                document.getElementById('auth-status').innerText = "Erreur: Vérifiez la config Firebase ❌";
+                console.error("Erreur d'auth:", err);
+                document.getElementById('auth-status').innerText = "Erreur de connexion ❌";
             }
         };
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                document.getElementById('auth-status').innerText = "Serveur Prêt ✅";
+                document.getElementById('auth-status').innerText = "Connecté ✅";
                 ['btn-create', 'btn-join-trigger', 'btn-join-final'].forEach(id => {
                     const b = document.getElementById(id);
                     if(b) { b.disabled = false; b.classList.remove('opacity-50'); }
@@ -212,18 +233,17 @@
             if (!currentUser) return;
             playerName = document.getElementById('player-name').value.trim() || "Joueur";
             const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
-            
             currentRoomId = roomId;
             isHost = true;
-            
             try {
                 const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                 await setDoc(roomRef, {
                     id: roomId, 
                     status: 'waiting', 
-                    players: [{ uid: currentUser.uid, name: playerName, isHost: true, eliminated: false }],
+                    players: [{ uid: currentUser.uid, name: playerName, isHost: true, eliminated: false, clue: "" }],
                     messages: [{ sender: "Système", text: "Salon créé !" }],
                     hostId: currentUser.uid,
+                    activePlayerIdx: 0,
                     config: { theme: 'mix', maxPlayers: 8 } 
                 });
                 enterLobby(roomId);
@@ -235,17 +255,14 @@
             playerName = document.getElementById('player-name').value.trim() || "Invité";
             const roomId = document.getElementById('room-code-input').value.trim().toUpperCase();
             if (!roomId) return;
-
             try {
                 const ref = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
                 const snap = await getDoc(ref);
-                if (!snap.exists()) return;
-                
+                if (!snap.exists()) return alert("Salon introuvable");
                 const data = snap.data();
                 if (data.players.length >= data.config.maxPlayers) return alert("Salon plein !");
-
                 await updateDoc(ref, { 
-                    players: arrayUnion({ uid: currentUser.uid, name: playerName, isHost: false, eliminated: false }) 
+                    players: arrayUnion({ uid: currentUser.uid, name: playerName, isHost: false, eliminated: false, clue: "" }) 
                 });
                 currentRoomId = roomId;
                 enterLobby(roomId);
@@ -256,20 +273,19 @@
             document.getElementById('view-setup').classList.add('hidden');
             document.getElementById('view-lobby').classList.remove('hidden');
             document.getElementById('display-room-code').innerText = roomId;
-            
             const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
             if (unsubscribeRoom) unsubscribeRoom();
-            
             unsubscribeRoom = onSnapshot(roomRef, (snapshot) => {
                 if (!snapshot.exists()) return;
+                const prevStatus = roomData?.status;
+                const prevIdx = roomData?.activePlayerIdx;
                 roomData = snapshot.data();
                 isHost = roomData.hostId === currentUser.uid;
                 
-                const hostPanel = document.getElementById('host-config-panel');
-                hostPanel.classList.toggle('hidden', !isHost);
+                document.getElementById('host-config-panel').classList.toggle('hidden', !isHost);
                 document.getElementById('host-controls').classList.toggle('hidden', !isHost);
                 
-                if (isHost) {
+                if (isHost && roomData.status === 'waiting') {
                     document.getElementById('lobby-config-theme').value = roomData.config.theme;
                     document.getElementById('lobby-config-max').value = roomData.config.maxPlayers;
                 }
@@ -281,10 +297,17 @@
                 updateLobbyUI();
                 
                 if (roomData.status === 'starting' && !countdownRunning) startCountdown();
-                if (roomData.status === 'playing') showGameView();
-                if (roomData.status === 'waiting') {
+                if (roomData.status === 'playing') {
+                    showGameView();
+                    // Si le joueur actif change, reset le timer localement
+                    if (prevIdx !== roomData.activePlayerIdx) {
+                        startTurnTimer();
+                    }
+                }
+                if (roomData.status === 'waiting' && prevStatus === 'playing') {
                     document.getElementById('view-game').classList.add('hidden');
                     document.getElementById('view-lobby').classList.remove('hidden');
+                    clearInterval(timerInterval);
                 }
             });
         };
@@ -293,12 +316,9 @@
             if (!isHost || !currentRoomId) return;
             const theme = document.getElementById('lobby-config-theme').value;
             const maxPlayers = parseInt(document.getElementById('lobby-config-max').value);
-            
-            try {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
-                    config: { theme, maxPlayers }
-                });
-            } catch (err) { console.error(err); }
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
+                config: { theme, maxPlayers }
+            });
         };
 
         const updateLobbyUI = () => {
@@ -307,9 +327,8 @@
                     ${p.isHost ? '👑 ' : ''}${p.name}
                 </div>
             `).join('');
-            
             const chatBox = document.getElementById('chat-messages');
-            chatBox.innerHTML = roomData.messages.map(m => `
+            chatBox.innerHTML = (roomData.messages || []).map(m => `
                 <div class="text-xs">
                     <span class="font-black text-indigo-400">${m.sender}:</span>
                     <span class="text-gray-300 ml-1">${m.text}</span>
@@ -361,10 +380,11 @@
             players = players.map((p, i) => ({
                 ...p,
                 role: i === 0 ? 'Imposteur' : 'Civil',
-                word: i === 0 ? pair.impo : pair.civ
+                word: i === 0 ? pair.impo : pair.civ,
+                clue: ""
             }));
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
-                status: 'playing', players: players
+                status: 'playing', players, activePlayerIdx: 0
             });
         };
 
@@ -376,7 +396,9 @@
             const me = roomData.players.find(p => p.uid === currentUser.uid);
             if (!me) return;
             const isImpo = me.role === 'Imposteur';
+            const activePlayer = roomData.players[roomData.activePlayerIdx];
 
+            // Rôle
             document.getElementById('my-role-card').innerHTML = `
                 <div class="glass p-6 rounded-[2rem] border-white/10 text-center fade-in ${isImpo ? 'bg-red-500/10 border-red-500/30' : 'bg-indigo-500/10 border-indigo-500/30'}">
                     <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Tu es</p>
@@ -388,14 +410,70 @@
                 </div>
             `;
 
+            // Zone de tour
+            document.getElementById('active-player-name').innerText = activePlayer.uid === currentUser.uid ? "TOI !" : activePlayer.name;
+            const isMyTurn = activePlayer.uid === currentUser.uid;
+            document.getElementById('clue-input-area').classList.toggle('hidden', !isMyTurn);
+            document.getElementById('wait-msg').classList.toggle('hidden', isMyTurn);
+
+            // Liste des joueurs avec leurs indices
             document.getElementById('game-player-list').innerHTML = roomData.players.map(p => `
-                <div class="p-4 glass rounded-2xl flex justify-between items-center border-white/5">
+                <div class="p-4 glass rounded-2xl flex justify-between items-center border-white/5 ${activePlayer.uid === p.uid ? 'ring-2 ring-indigo-500/50' : ''}">
                     <div class="flex items-center gap-3">
-                        <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                        <div class="w-2 h-2 rounded-full ${activePlayer.uid === p.uid ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]' : 'bg-green-500'}"></div>
                         <span class="font-bold text-sm text-gray-200">${p.name}</span>
+                    </div>
+                    <div class="bg-indigo-500/20 px-3 py-1 rounded-lg border border-indigo-500/20">
+                         <span class="text-[10px] font-black text-indigo-300 uppercase italic">${p.clue || '...'}</span>
                     </div>
                 </div>
             `).join('');
+        };
+
+        const startTurnTimer = () => {
+            clearInterval(timerInterval);
+            const activePlayer = roomData.players[roomData.activePlayerIdx];
+            if (!activePlayer) return;
+
+            let timeLeft = 10;
+            const timerEl = document.getElementById('turn-timer');
+            if (timerEl) timerEl.innerText = timeLeft;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                if (timerEl) timerEl.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if (activePlayer.uid === currentUser.uid) {
+                        submitClue("TEMPS ÉCOULÉ");
+                    }
+                }
+            }, 1000);
+        };
+
+        window.submitClue = async (forcedClue = null) => {
+            const input = document.getElementById('clue-input');
+            const clue = forcedClue || input.value.trim();
+            if (!clue && !forcedClue) return;
+            
+            clearInterval(timerInterval);
+            input.value = "";
+
+            const updatedPlayers = [...roomData.players];
+            updatedPlayers[roomData.activePlayerIdx].clue = clue;
+
+            // Passer au joueur suivant
+            let nextIdx = roomData.activePlayerIdx + 1;
+            if (nextIdx >= updatedPlayers.length) {
+                // Tout le monde a joué, on peut rester sur le dernier ou loop
+                nextIdx = 0; 
+                // Optionnel: On pourrait trigger la phase de vote ici
+            }
+
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
+                players: updatedPlayers,
+                activePlayerIdx: nextIdx
+            });
         };
 
         window.resetToLobby = async () => {
