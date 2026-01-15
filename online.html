@@ -44,7 +44,7 @@
         </header>
 
         <div id="auth-status" class="text-[10px] font-bold text-yellow-400 bg-yellow-500/10 px-4 py-1 rounded-full border border-yellow-500/20 text-center">
-            Initialisation...
+            En attente de configuration...
         </div>
 
         <div class="w-full glass p-6 rounded-3xl space-y-6 shadow-2xl border-white/5 neon-border">
@@ -149,7 +149,18 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // --- REMPLISSEZ CETTE SECTION AVEC VOS COORDONNÉES FIREBASE ---
+        const firebaseConfig = {
+  apiKey: "AIzaSyBrn4qChbtsZzP7nMKA5GGR7K024pFxtf0",
+  authDomain: "rogarsimpostorcards.firebaseapp.com",
+  projectId: "rogarsimpostorcards",
+  storageBucket: "rogarsimpostorcards.firebasestorage.app",
+  messagingSenderId: "750585646128",
+  appId: "1:750585646128:web:168c0926d3a6c90563f1f5",
+  measurementId: "G-7KBF70TP2D"
+};
+        // -------------------------------------------------------------
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -178,7 +189,10 @@
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error(err);
+                document.getElementById('auth-status').innerText = "Erreur: Vérifiez la config Firebase ❌";
+            }
         };
 
         onAuthStateChanged(auth, (user) => {
@@ -210,7 +224,7 @@
                     players: [{ uid: currentUser.uid, name: playerName, isHost: true, eliminated: false }],
                     messages: [{ sender: "Système", text: "Salon créé !" }],
                     hostId: currentUser.uid,
-                    config: { theme: 'mix', maxPlayers: 8 } // Valeurs par défaut
+                    config: { theme: 'mix', maxPlayers: 8 } 
                 });
                 enterLobby(roomId);
             } catch (err) { console.error(err); }
@@ -251,18 +265,15 @@
                 roomData = snapshot.data();
                 isHost = roomData.hostId === currentUser.uid;
                 
-                // UI de l'hôte
                 const hostPanel = document.getElementById('host-config-panel');
                 hostPanel.classList.toggle('hidden', !isHost);
                 document.getElementById('host-controls').classList.toggle('hidden', !isHost);
                 
-                // Si on est hôte, on met à jour les sélecteurs avec la config actuelle (si pas encore fait)
                 if (isHost) {
                     document.getElementById('lobby-config-theme').value = roomData.config.theme;
                     document.getElementById('lobby-config-max').value = roomData.config.maxPlayers;
                 }
 
-                // Badges de config (pour tout le monde)
                 document.getElementById('badge-theme').innerText = `Thème: ${roomData.config.theme}`;
                 document.getElementById('badge-max').innerText = `Max: ${roomData.config.maxPlayers}`;
                 document.getElementById('player-count').innerText = `${roomData.players.length}/${roomData.config.maxPlayers}`;
@@ -278,7 +289,6 @@
             });
         };
 
-        // Mise à jour de la config par l'hôte en plein lobby
         window.updateRoomConfig = async () => {
             if (!isHost || !currentRoomId) return;
             const theme = document.getElementById('lobby-config-theme').value;
