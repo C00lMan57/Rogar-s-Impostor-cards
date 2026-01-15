@@ -3,520 +3,405 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rogar's Impostor Cards - Final Edition</title>
+    <title>Rogar's Impostor - Local Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background: #0f172a; color: #ffffff; min-height: 100vh; overflow-x: hidden; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .btn-gradient { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); transition: all 0.2s ease; }
-        .btn-gradient-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); transition: all 0.2s ease; }
-        
+        .btn-outline-indigo { border: 2px solid #6366f1; background: transparent; transition: all 0.2s ease; }
+        .btn-outline-indigo:hover { background: rgba(99, 102, 241, 0.1); box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
         .perspective-1000 { perspective: 1000px; }
         .card-inner { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
         .is-flipped { transform: rotateY(180deg); }
         .backface-hidden { backface-visibility: hidden; }
-        
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #10b981; border-color: #10b981; }
-        input:checked + .slider:before { transform: translateX(20px); }
-
-        .progress-bar { transition: width 1s linear; }
-        @keyframes pulse-red { 0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 50% { box-shadow: 0 0 20px 0 rgba(239, 68, 68, 0.2); } }
-        .animate-pulse-red { animation: pulse-red 2s infinite; }
         .animate-pulse-soft { animation: pulse-soft 2s infinite; }
         @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
     </style>
 </head>
 <body class="p-4 flex flex-col items-center">
 
-    <!-- HUB PRINCIPAL -->
-    <div id="view-hub" class="w-full max-w-md py-12 flex flex-col items-center space-y-8">
+    <!-- MENU PRINCIPAL (HUB) -->
+    <div id="view-hub" class="w-full max-w-md py-12 flex flex-col items-center space-y-8 fade-in">
         <header class="text-center">
-            <h1 class="text-5xl font-black italic tracking-tighter leading-none mb-2">ROGAR'S<br><span class="text-indigo-500">IMPOSTOR</span></h1>
-            <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">The Final Social Game</p>
+            <h1 class="text-5xl font-black italic tracking-tighter leading-none mb-2 text-white">ROGAR'S<br><span class="text-indigo-500">IMPOSTOR</span></h1>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">Local Party Game</p>
         </header>
 
-        <div class="flex bg-white/5 p-1 rounded-2xl w-full border border-white/10">
-            <button id="btn-mode-online" onclick="switchMode('online')" class="flex-1 py-3 rounded-xl font-bold text-xs transition-all bg-indigo-600 text-white shadow-lg">MODE EN LIGNE</button>
-            <button id="btn-mode-local" onclick="switchMode('local')" class="flex-1 py-3 rounded-xl font-bold text-xs transition-all text-gray-400 hover:text-white">MODE LOCAL</button>
-        </div>
+        <div class="w-full glass p-8 rounded-3xl space-y-6 shadow-2xl border-white/5">
+            <div class="text-center">
+                <h3 class="text-xl font-black uppercase italic tracking-tighter text-indigo-400">Mode Local</h3>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Nombre de Joueurs -->
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2 text-center">Nombre de Joueurs</label>
+                    <div class="flex items-center justify-between bg-white/5 p-2 rounded-xl">
+                        <button onclick="changeVal('players', -1)" class="w-12 h-12 glass rounded-lg font-black text-xl hover:bg-white/10 active:scale-90 transition-all">-</button>
+                        <span id="val-players" class="text-3xl font-black">4</span>
+                        <button onclick="changeVal('players', 1)" class="w-12 h-12 glass rounded-lg font-black text-xl hover:bg-white/10 active:scale-90 transition-all">+</button>
+                    </div>
+                </div>
 
-        <div class="w-full">
-            <div class="glass p-8 rounded-3xl space-y-6 shadow-2xl border-white/5">
-                <div id="section-online" class="space-y-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Ton identité</label>
-                        <input type="text" id="player-name" placeholder="Pseudo" class="w-full bg-white/5 p-4 rounded-2xl outline-none border border-white/10 text-center font-bold focus:border-indigo-500/50 transition-all text-white">
-                    </div>
-                    <div class="pt-2 space-y-3">
-                        <button onclick="window.createRoom()" class="w-full btn-gradient p-5 rounded-2xl font-black shadow-lg uppercase tracking-tighter text-lg">Créer un salon</button>
-                        <div class="relative flex items-center py-2">
-                            <div class="flex-grow border-t border-white/5"></div>
-                            <span class="flex-shrink mx-4 text-[10px] font-black text-gray-600 uppercase">Ou rejoindre</span>
-                            <div class="flex-grow border-t border-white/5"></div>
-                        </div>
-                        <div class="flex gap-2">
-                            <input type="text" id="room-code-input" placeholder="CODE" class="w-full bg-white/5 p-4 rounded-xl outline-none border border-white/10 text-center uppercase font-mono font-bold text-white">
-                            <button onclick="window.joinRoom()" class="glass px-6 rounded-xl font-bold text-sm hover:bg-white/10 transition-colors">OK</button>
-                        </div>
+                <!-- Nombre d'Imposteurs -->
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2 text-center">Nombre d'Imposteurs</label>
+                    <div class="flex items-center justify-between bg-white/5 p-2 rounded-xl">
+                        <button onclick="changeVal('impostors', -1)" class="w-12 h-12 glass rounded-lg font-black text-xl hover:bg-white/10 active:scale-90 transition-all">-</button>
+                        <span id="val-impostors" class="text-3xl font-black">1</span>
+                        <button onclick="changeVal('impostors', 1)" class="w-12 h-12 glass rounded-lg font-black text-xl hover:bg-white/10 active:scale-90 transition-all">+</button>
                     </div>
                 </div>
-                <div id="section-local" class="hidden text-center py-10 text-gray-500 italic">
-                    Utilisez le mode Online pour profiter des nouvelles fonctionnalités de gestion d'hôte.
+
+                <!-- Option Indice -->
+                <div class="flex items-center justify-between bg-white/5 p-4 rounded-xl border border-white/5">
+                    <div class="flex flex-col">
+                        <span class="text-xs font-black uppercase tracking-wider text-gray-300">Indice pour l'Imposteur</span>
+                        <span class="text-[8px] text-gray-500 uppercase font-bold italic">Donne la catégorie du mot des civils</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="opt-hints" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
                 </div>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="showNameConfig()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-lg tracking-tight">
+                    Jouer en Local
+                </button>
+                
+                <button onclick="goToOnline()" class="w-full btn-outline-indigo p-4 rounded-2xl font-black uppercase text-sm tracking-widest flex items-center justify-center gap-3">
+                    <span>🌐</span> Mode Online
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- CONTAINER DE JEU DYNAMIQUE -->
-    <div id="game-container" class="w-full max-w-md hidden">
-        <div id="dynamic-content"></div>
+    <!-- CONFIG DES NOMS -->
+    <div id="view-names" class="w-full max-w-md hidden fade-in py-12">
+        <div class="glass p-8 rounded-3xl space-y-6 shadow-2xl border-white/5">
+            <div class="text-center">
+                <h3 class="text-xl font-black uppercase italic tracking-tighter text-indigo-400">Noms des Joueurs</h3>
+            </div>
+            <div id="names-list" class="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar"></div>
+            <div class="flex gap-3">
+                <button onclick="backToHub()" class="flex-1 glass p-4 rounded-xl font-bold text-xs uppercase opacity-60">Retour</button>
+                <button onclick="startGame()" class="flex-[2] btn-gradient p-4 rounded-xl font-black uppercase shadow-lg text-sm">C'est parti !</button>
+            </div>
+        </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+    <!-- CONTENEUR DE JEU -->
+    <div id="game-container" class="w-full max-w-md hidden fade-in">
+        <div id="game-content"></div>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBrn4qChbtsZzP7nMKA5GGR7K024pFxtf0",
-            authDomain: "rogarsimpostorcards.firebaseapp.com",
-            projectId: "rogarsimpostorcards",
-            appId: "1:750585646128:web:168c0926d3a6c90563f1f5"
-        };
+    <!-- MODAL TENTATIVE ULTIME -->
+    <div id="guess-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[70] flex items-center justify-center p-6 hidden">
+        <div class="w-full max-w-xs glass p-8 rounded-[2.5rem] border-white/10 text-center space-y-6 fade-in">
+            <div class="space-y-2">
+                <p class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Dernière chance</p>
+                <h3 class="text-2xl font-black uppercase italic tracking-tight text-white">Quel est le mot des civils ?</h3>
+                <p class="text-[9px] text-red-500 font-bold uppercase italic">⚠️ Si tu te trompes, tu es éliminé !</p>
+            </div>
+            <input type="text" id="guess-input" placeholder="Ecris le mot ici..." class="w-full bg-white/5 p-4 rounded-2xl border border-white/10 outline-none font-bold text-center uppercase tracking-widest focus:border-indigo-500 transition-all">
+            <div class="flex flex-col gap-3">
+                <button onclick="submitGuess()" class="w-full btn-gradient p-4 rounded-2xl font-black uppercase text-sm shadow-lg">Valider</button>
+                <button onclick="closeGuess()" class="w-full glass p-4 rounded-2xl font-black uppercase text-xs text-gray-400">Annuler</button>
+            </div>
+        </div>
+    </div>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    <!-- MODAL DE CONFIRMATION D'ÉJECTION -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[60] flex items-center justify-center p-6 hidden">
+        <div class="w-full max-w-xs glass p-8 rounded-[2.5rem] border-white/10 text-center space-y-6 fade-in">
+            <div class="space-y-2">
+                <p class="text-[10px] font-black text-red-500 uppercase tracking-widest">Confirmation</p>
+                <h3 id="confirm-text" class="text-2xl font-black uppercase italic tracking-tight">Éjecter ce joueur ?</h3>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button id="confirm-yes" class="w-full bg-red-600 p-4 rounded-2xl font-black uppercase text-sm shadow-lg hover:bg-red-500 transition-all">Éjecter</button>
+                <button onclick="closeConfirm()" class="w-full glass p-4 rounded-2xl font-black uppercase text-xs text-gray-400">Annuler</button>
+            </div>
+        </div>
+    </div>
 
-        let currentUserId = null;
-        let currentRoomId = null;
-        let isHost = false;
-        let timerInterval = null;
-        let unsubscribeRoom = null;
+    <!-- OVERLAY RÉSULTAT ELIMINATION -->
+    <div id="overlay" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-6 hidden text-white text-center">
+        <div id="overlay-content"></div>
+    </div>
+
+    <script>
+        let config = { players: 4, impostors: 1, useHints: true };
+        let gameState = { players: [], currentStep: 0, phase: 'reveal', secretWord: "" };
+        let playerToEliminate = null;
 
         const wordPairs = [
-            { words: ["Lion", "Tigre"], hint: "C'est un grand félin sauvage." },
-            { words: ["Pizza", "Burger"], hint: "C'est un plat de fast-food." },
-            { words: ["Avion", "Fusée"], hint: "C'est un engin de vol." },
-            { words: ["Soleil", "Étoile"], hint: "C'est un astre lumineux." },
-            { words: ["Stylo", "Crayon"], hint: "C'est un outil pour écrire." }
+            { civ: "Lion", hint: "Félin sauvage" },
+            { civ: "Pizza", hint: "Restauration rapide" },
+            { civ: "Avion", hint: "Transport aérien" },
+            { civ: "Soleil", hint: "Objet céleste" },
+            { civ: "Football", hint: "Sport de ballon" },
+            { civ: "Guitare", hint: "Instrument à cordes" },
+            { civ: "Pomme", hint: "Fruit du verger" },
+            { civ: "Paris", hint: "Capitale européenne" },
+            { civ: "Stylo", hint: "Fourniture de bureau" },
+            { civ: "Chocolat", hint: "Confiserie" }
         ];
 
-        signInAnonymously(auth);
-        onAuthStateChanged(auth, u => { if(u) currentUserId = u.uid; });
-
-        window.switchMode = (m) => {
-            document.getElementById('section-online').classList.toggle('hidden', m !== 'online');
-            document.getElementById('section-local').classList.toggle('hidden', m !== 'local');
-        };
-
-        // --- GESTION DES SALONS ---
-
-        window.createRoom = async () => {
-            const name = document.getElementById('player-name').value || "Inconnu";
-            const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
-            currentRoomId = roomId;
-            isHost = true;
-            await setDoc(doc(db, "rooms", roomId), {
-                id: roomId,
-                hostId: currentUserId,
-                status: 'lobby',
-                players: [{ id: currentUserId, name, isHost: true, role: '', word: '', eliminated: false }],
-                settings: { impostorsCount: 1, hintsEnabled: true },
-                gameState: { phase: 'idle', words: [], currentSpeakerIndex: 0, timer: 0, votes: {} }
-            });
-            listenToRoom(roomId);
-        };
-
-        window.joinRoom = async () => {
-            const name = document.getElementById('player-name').value || "Inconnu";
-            const roomId = document.getElementById('room-code-input').value.toUpperCase();
-            if(!roomId) return;
-            const snap = await getDoc(doc(db, "rooms", roomId));
-            if(snap.exists() && snap.data().status === 'lobby') {
-                currentRoomId = roomId;
-                await updateDoc(doc(db, "rooms", roomId), {
-                    players: arrayUnion({ id: currentUserId, name, isHost: false, role: '', word: '', eliminated: false })
-                });
-                listenToRoom(roomId);
-            } else {
-                alert("Salon introuvable ou déjà en cours.");
-            }
-        };
-
-        function listenToRoom(roomId) {
-            document.getElementById('view-hub').classList.add('hidden');
-            document.getElementById('game-container').classList.remove('hidden');
-            
-            if(unsubscribeRoom) unsubscribeRoom();
-            unsubscribeRoom = onSnapshot(doc(db, "rooms", roomId), (snap) => {
-                if(!snap.exists()) return window.resetToMenu();
-                const data = snap.data();
-                const me = data.players.find(p => p.id === currentUserId);
-                if(!me) return window.resetToMenu();
-
-                isHost = data.hostId === currentUserId;
-                if(data.status === 'lobby') renderLobby(data);
-                else if(data.status === 'finished') renderVictory(data);
-                else renderGame(data);
-            });
+        function changeVal(key, delta) {
+            config[key] = Math.max(1, Math.min(12, config[key] + delta));
+            if (config.impostors >= config.players) config.impostors = config.players - 1;
+            document.getElementById(`val-${key}`).innerText = config[key];
         }
 
-        window.updateSettings = async (key, val) => {
-            if(!isHost) return;
-            const roomRef = doc(db, "rooms", currentRoomId);
-            const snap = await getDoc(roomRef);
-            const settings = snap.data().settings;
-            settings[key] = val;
-            await updateDoc(roomRef, { settings });
-        };
+        function goToOnline() {
+            const onlineUrl = "imposteur_online.html"; 
+            window.location.href = onlineUrl;
+        }
 
-        window.kickPlayer = async (playerId) => {
-            if(!isHost) return;
-            const roomRef = doc(db, "rooms", currentRoomId);
-            const snap = await getDoc(roomRef);
-            const players = snap.data().players.filter(p => p.id !== playerId);
-            await updateDoc(roomRef, { players });
-        };
-
-        // --- LOGIQUE DE JEU ---
-
-        window.startGame = async () => {
-            const snap = await getDoc(doc(db, "rooms", currentRoomId));
-            const data = snap.data();
-            const pair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
-            const players = [...data.players];
+        function showNameConfig() {
+            config.useHints = document.getElementById('opt-hints').checked;
+            document.getElementById('view-hub').classList.add('hidden');
+            document.getElementById('view-names').classList.remove('hidden');
             
-            const impoIndices = [];
-            while(impoIndices.length < data.settings.impostorsCount) {
-                const r = Math.floor(Math.random() * players.length);
-                if(!impoIndices.includes(r)) impoIndices.push(r);
+            const list = document.getElementById('names-list');
+            list.innerHTML = '';
+            for(let i=0; i < config.players; i++) {
+                list.innerHTML += `
+                    <div class="bg-white/5 p-1 rounded-xl flex items-center border border-white/5">
+                        <span class="w-8 text-center text-[10px] font-black text-gray-500">${i+1}</span>
+                        <input type="text" id="name-${i}" value="Joueur ${i+1}" class="bg-transparent flex-1 p-3 outline-none font-bold text-sm text-white">
+                    </div>
+                `;
+            }
+        }
+
+        function backToHub() {
+            document.getElementById('view-names').classList.add('hidden');
+            document.getElementById('view-hub').classList.remove('hidden');
+        }
+
+        function startGame() {
+            document.getElementById('view-names').classList.add('hidden');
+            document.getElementById('game-container').classList.remove('hidden');
+
+            const pair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+            const players = [];
+            const impostorIndices = [];
+
+            while(impostorIndices.length < config.impostors) {
+                const r = Math.floor(Math.random() * config.players);
+                if(!impostorIndices.includes(r)) impostorIndices.push(r);
             }
 
-            players.forEach((p, i) => {
-                p.role = impoIndices.includes(i) ? 'Imposteur' : 'Civil';
-                p.word = p.role === 'Civil' ? pair.words[0] : (data.settings.hintsEnabled ? pair.hint : '???');
-                p.eliminated = false;
-            });
+            for(let i=0; i < config.players; i++) {
+                const isImpo = impostorIndices.includes(i);
+                const customName = document.getElementById(`name-${i}`).value || `Joueur ${i+1}`;
+                players.push({
+                    id: i,
+                    name: customName,
+                    role: isImpo ? 'Imposteur' : 'Civil',
+                    word: isImpo ? '???' : pair.civ,
+                    hint: pair.hint,
+                    eliminated: false
+                });
+            }
 
-            await updateDoc(doc(db, "rooms", currentRoomId), {
-                status: 'playing',
-                players: players,
-                gameState: {
-                    phase: 'word_entry',
-                    currentSpeakerIndex: 0,
-                    timer: Date.now() + 16000,
-                    words: [],
-                    votes: {}
-                }
-            });
-        };
+            gameState = { players, currentStep: 0, phase: 'reveal', secretWord: pair.civ };
+            render();
+        }
 
-        function renderLobby(data) {
-            const settings = data.settings;
-            document.getElementById('dynamic-content').innerHTML = `
-                <div class="space-y-6 text-center animate-in fade-in">
-                    <div>
-                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Code du salon</p>
-                        <h2 class="text-4xl font-black text-indigo-500 font-mono tracking-tighter">${data.id}</h2>
-                    </div>
+        function render() {
+            const container = document.getElementById('game-content');
+            
+            if (gameState.phase === 'reveal') {
+                const p = gameState.players[gameState.currentStep];
+                container.innerHTML = `
+                    <div class="space-y-8 text-center fade-in">
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Étape 1 : Secret</p>
+                            <h2 class="text-4xl font-black uppercase text-indigo-400">${p.name}</h2>
+                        </div>
 
-                    <div class="glass p-6 rounded-3xl space-y-4 border-white/10 text-left">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold uppercase text-gray-400">Imposteurs</span>
-                            <div class="flex items-center gap-3">
-                                ${isHost ? `
-                                    <button onclick="window.updateSettings('impostorsCount', Math.max(1, ${settings.impostorsCount}-1))" class="w-8 h-8 glass rounded-lg">-</button>
-                                    <span class="font-black text-indigo-400">${settings.impostorsCount}</span>
-                                    <button onclick="window.updateSettings('impostorsCount', Math.min(3, ${settings.impostorsCount}+1))" class="w-8 h-8 glass rounded-lg">+</button>
-                                ` : `<span class="font-black text-indigo-400">${settings.impostorsCount}</span>`}
+                        <div class="perspective-1000 w-full h-80 mx-auto" onclick="this.querySelector('.card-inner').classList.toggle('is-flipped')">
+                            <div class="card-inner relative w-full h-full shadow-2xl">
+                                <div class="backface-hidden absolute inset-0 glass rounded-[2.5rem] flex flex-col items-center justify-center border-2 border-dashed border-white/20">
+                                    <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4 text-4xl">🃏</div>
+                                    <p class="text-xs font-black uppercase tracking-tighter animate-pulse-soft">Appuie pour voir ta carte</p>
+                                </div>
+                                <div class="backface-hidden absolute inset-0 ${p.role === 'Imposteur' ? 'bg-red-600' : 'bg-indigo-600'} rounded-[2.5rem] flex flex-col items-center justify-center p-8" style="transform: rotateY(180deg)">
+                                    <p class="text-[10px] font-bold uppercase opacity-60 mb-2">Ton Rôle</p>
+                                    <h3 class="font-black text-3xl uppercase mb-6">${p.role}</h3>
+                                    <div class="bg-black/20 p-6 rounded-2xl w-full border border-white/10 mb-4">
+                                        <p class="text-[10px] font-bold uppercase opacity-50 mb-1">Mot secret</p>
+                                        <p class="text-3xl font-black uppercase tracking-widest">${p.word}</p>
+                                    </div>
+                                    
+                                    ${config.useHints && p.role === 'Imposteur' ? `
+                                        <div class="bg-white/10 p-3 rounded-xl border border-white/20 w-full">
+                                            <p class="text-[9px] font-black uppercase tracking-widest text-white/70 mb-1 italic">Catégorie des civils</p>
+                                            <p class="text-sm font-black tracking-tight uppercase">${p.hint}</p>
+                                        </div>
+                                    ` : ''}
+                                </div>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold uppercase text-gray-400">Indices</span>
-                            <label class="switch">
-                                <input type="checkbox" ${settings.hintsEnabled ? 'checked' : ''} ${!isHost ? 'disabled' : ''} onchange="window.updateSettings('hintsEnabled', this.checked)">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    </div>
 
-                    <div class="space-y-2">
-                        <div class="flex justify-between px-1">
-                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Joueurs (${data.players.length})</label>
-                        </div>
-                        <div class="grid grid-cols-1 gap-2">
-                            ${data.players.map(p => `
-                                <div class="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/10">
-                                    <div class="flex items-center gap-3">
-                                        <span>${p.isHost ? '👑' : '👤'}</span>
-                                        <span class="font-bold ${p.id === currentUserId ? 'text-indigo-400' : ''}">${p.name}</span>
-                                    </div>
-                                    ${isHost && p.id !== currentUserId ? `
-                                        <button onclick="window.kickPlayer('${p.id}')" class="text-red-500 hover:text-red-400 font-bold px-2 text-xl">×</button>
-                                    ` : '<div class="w-2 h-2 rounded-full bg-emerald-500"></div>'}
-                                </div>
+                        <button onclick="nextStep()" class="w-full glass p-5 rounded-2xl font-black uppercase text-sm border-white/10">
+                            C'est bon !
+                        </button>
+                    </div>
+                `;
+            } else if (gameState.phase === 'vote') {
+                const alive = gameState.players.filter(p => !p.eliminated);
+                container.innerHTML = `
+                    <div class="space-y-6 fade-in text-center">
+                        <h2 class="text-4xl font-black text-red-500 italic uppercase">VOTEZ !</h2>
+                        <div class="grid grid-cols-1 gap-3">
+                            ${alive.map(p => `
+                                <button onclick="askEliminate(${p.id})" class="p-5 glass rounded-2xl font-black text-lg uppercase flex justify-between items-center hover:border-indigo-500 transition-all">
+                                    <span>${p.name}</span>
+                                    <span class="text-[10px] bg-white/10 px-3 py-1 rounded-full">Éliminer</span>
+                                </button>
                             `).join('')}
                         </div>
-                    </div>
-
-                    <div class="pt-4 space-y-3">
-                        ${isHost ? `
-                            <button onclick="window.startGame()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase text-lg shadow-xl ${data.players.length < 3 ? 'opacity-50 grayscale cursor-not-allowed' : ''}">
-                                ${data.players.length < 3 ? 'Besoin de 3 joueurs' : 'Lancer la partie'}
+                        
+                        <div class="pt-4">
+                            <button onclick="openGuess()" class="w-full bg-white/5 border border-dashed border-white/20 p-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white/10 transition-all text-gray-400">
+                                🎯 Tentative Ultime
                             </button>
-                        ` : `<div class="p-5 text-center glass rounded-2xl italic text-gray-500 text-sm">En attente de l'hôte...</div>`}
-                        <button onclick="window.resetToMenu()" class="w-full py-3 text-xs font-black text-gray-600 uppercase tracking-widest">Quitter</button>
+                            <p class="text-[8px] text-gray-600 uppercase mt-2 italic">Une seule chance : Gagne ou sois Éliminé</p>
+                        </div>
                     </div>
-                </div>`;
+                `;
+            }
         }
 
-        function renderGame(data) {
-            const me = data.players.find(p => p.id === currentUserId);
-            const activePlayers = data.players.filter(p => !p.eliminated);
-            const speaker = data.players[data.gameState.currentSpeakerIndex];
-            const isMyTurn = speaker && speaker.id === currentUserId && data.gameState.phase === 'word_entry';
-            
-            clearInterval(timerInterval);
-            const timeLeft = Math.max(0, Math.floor((data.gameState.timer - Date.now()) / 1000));
-            
-            let html = `
-                <div class="space-y-4 animate-in fade-in">
-                    <!-- CARTE DU JOUEUR -->
-                    <div class="perspective-1000 w-full h-40 mb-6" onclick="this.querySelector('.card-inner').classList.toggle('is-flipped')">
-                        <div class="card-inner relative w-full h-full shadow-2xl rounded-[2rem]">
-                            <div class="backface-hidden absolute inset-0 glass rounded-[2rem] flex flex-col items-center justify-center border-2 border-dashed border-white/20">
-                                <span class="text-[10px] font-black uppercase text-indigo-400 animate-pulse-soft">Toucher pour révéler</span>
-                            </div>
-                            <div class="backface-hidden absolute inset-0 ${me.role === 'Imposteur' ? 'bg-red-600' : 'bg-indigo-600'} rounded-[2rem] flex flex-col items-center justify-center p-6 text-center" style="transform: rotateY(180deg)">
-                                <h3 class="font-black text-xl uppercase mb-1">${me.role} ${me.eliminated ? '(ELIMINÉ)' : ''}</h3>
-                                <div class="bg-black/20 p-3 rounded-xl w-full">
-                                    <p class="text-lg font-bold uppercase tracking-widest">${me.word}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        function nextStep() {
+            gameState.currentStep++;
+            if (gameState.currentStep >= gameState.players.length) {
+                gameState.phase = 'vote';
+            }
+            render();
+        }
 
-                    <!-- PHASE DE MOT -->
-                    ${data.gameState.phase === 'word_entry' ? `
-                        <div class="text-center space-y-4">
-                            <h2 class="text-xl font-black italic uppercase">Au tour de <span class="text-indigo-400">${speaker.name}</span></h2>
-                            <div class="relative h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                                <div id="timer-bar" class="progress-bar absolute h-full bg-indigo-500" style="width: ${(timeLeft/15)*100}%"></div>
-                            </div>
-                            
-                            ${isMyTurn ? `
-                                <div class="glass p-6 rounded-3xl space-y-4 border-indigo-500/30 animate-pulse-red">
-                                    <input type="text" id="word-input" maxlength="20" placeholder="Ton mot..." class="w-full bg-white/10 p-5 rounded-2xl text-center font-black text-2xl uppercase outline-none border border-white/20 focus:border-indigo-500 text-white">
-                                    <button onclick="window.sendWord()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase text-lg">Envoyer le mot</button>
-                                </div>
-                            ` : `
-                                <div class="glass p-8 rounded-[2rem] text-gray-500 italic flex items-center justify-center gap-3">
-                                    <div class="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div>
-                                    Réflexion en cours...
-                                </div>
-                            `}
-                        </div>
-                    ` : ''}
+        function askEliminate(id) {
+            const p = gameState.players.find(x => x.id === id);
+            playerToEliminate = id;
+            document.getElementById('confirm-text').innerText = `Éjecter ${p.name} ?`;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('confirm-yes').onclick = () => {
+                closeConfirm();
+                eliminate(playerToEliminate);
+            };
+        }
 
-                    <!-- PHASE DE VOTE -->
-                    ${data.gameState.phase === 'voting' ? `
-                        <div class="text-center space-y-4">
-                            <h2 class="text-3xl font-black text-red-500 uppercase italic">VOTE D'ÉLIMINATION</h2>
-                            <p class="text-xs text-gray-400 uppercase tracking-widest">Majorité requise pour éliminer</p>
-                            <div class="relative h-2 w-full bg-white/10 rounded-full overflow-hidden mb-4">
-                                <div id="timer-bar" class="progress-bar absolute h-full bg-red-500" style="width: ${(timeLeft/15)*100}%"></div>
-                            </div>
-                            <div class="grid grid-cols-1 gap-2">
-                                ${activePlayers.map(p => {
-                                    const voteCount = Object.values(data.gameState.votes || {}).filter(v => v === p.id).length;
-                                    const hasVoted = data.gameState.votes && data.gameState.votes[currentUserId];
-                                    return `
-                                        <button onclick="${!me.eliminated ? `window.castVote('${p.id}')` : ''}" class="flex items-center justify-between p-4 glass rounded-2xl font-bold border ${hasVoted === p.id ? 'border-indigo-500 bg-indigo-500/10' : 'border-white/5'}">
-                                            <span>${p.name}</span>
-                                            <div class="flex items-center gap-2">
-                                                <span class="text-xs text-gray-500">${voteCount} voix</span>
-                                                ${hasVoted === p.id ? '✅' : ''}
-                                            </div>
-                                        </button>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
+        function closeConfirm() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
 
-                    <!-- FLUX DES MOTS -->
-                    <div class="space-y-3 mt-8">
-                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest border-b border-white/5 pb-2">Journal des indices</p>
-                        <div class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-2">
-                            ${data.gameState.words.map(w => `
-                                <div class="flex items-center gap-3 text-sm">
-                                    <span class="font-black text-indigo-400 uppercase text-[10px] min-w-[60px]">${w.name}:</span>
-                                    <span class="bg-white/5 px-4 py-2 rounded-xl border border-white/5 font-bold">${w.text}</span>
-                                </div>
-                            `).reverse().join('')}
-                        </div>
-                    </div>
-                </div>`;
+        function openGuess() {
+            document.getElementById('guess-input').value = "";
+            document.getElementById('guess-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('guess-input').focus(), 300);
+        }
 
-            document.getElementById('dynamic-content').innerHTML = html;
+        function closeGuess() {
+            document.getElementById('guess-modal').classList.add('hidden');
+        }
 
-            // Timer Loop
-            timerInterval = setInterval(async () => {
-                const bar = document.getElementById('timer-bar');
-                const now = Date.now();
-                const diff = data.gameState.timer - now;
-                if(bar) bar.style.width = Math.max(0, (diff / 16000) * 100) + "%";
+        function submitGuess() {
+            const val = document.getElementById('guess-input').value.trim().toLowerCase();
+            const secret = gameState.secretWord.toLowerCase();
+            closeGuess();
+
+            if (val === secret) {
+                showEnd('Imposteurs', true);
+            } else {
+                // Élimination de l'imposteur qui a raté sa tentative
+                // On prend le premier imposteur vivant par défaut pour la démo locale
+                const currentImpo = gameState.players.find(p => p.role === 'Imposteur' && !p.eliminated);
                 
-                if(diff <= 0) {
-                    clearInterval(timerInterval);
-                    if(isHost) {
-                        if(data.gameState.phase === 'word_entry') window.sendWord();
-                        else if(data.gameState.phase === 'voting') window.resolveVote();
-                    }
-                }
-            }, 1000);
+                const overlay = document.getElementById('overlay');
+                const content = document.getElementById('overlay-content');
+                overlay.classList.remove('hidden');
+                
+                content.innerHTML = `
+                    <h2 class="text-4xl font-black uppercase text-red-500 mb-2">MAUVAIS MOT !</h2>
+                    <p class="text-gray-400 font-bold uppercase text-xs mb-6">Ce n'était pas "${val.toUpperCase()}"</p>
+                    <p class="text-white font-black uppercase text-sm italic">L'imposteur est éliminé pour son échec !</p>
+                `;
+                
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    if(currentImpo) eliminate(currentImpo.id);
+                }, 3000);
+            }
         }
 
-        function renderVictory(data) {
-            const winner = data.winner;
-            const impostors = data.players.filter(p => p.role === 'Imposteur').map(p => p.name).join(', ');
+        function eliminate(id) {
+            const p = gameState.players.find(x => x.id === id);
+            p.eliminated = true;
+
+            const overlay = document.getElementById('overlay');
+            const content = document.getElementById('overlay-content');
             
-            document.getElementById('dynamic-content').innerHTML = `
-                <div class="text-center space-y-8 py-10 animate-in zoom-in">
-                    <h1 class="text-6xl font-black italic ${winner === 'Civils' ? 'text-indigo-500' : 'text-red-500'} tracking-tighter">VICTOIRE<br>${winner.toUpperCase()}</h1>
-                    <div class="glass p-8 rounded-[2rem] space-y-4">
-                        <p class="text-gray-400 uppercase text-[10px] tracking-widest font-bold">L'imposteur était</p>
-                        <p class="text-2xl font-black">${impostors}</p>
+            overlay.classList.remove('hidden');
+            content.innerHTML = `
+                <p class="text-gray-500 font-bold uppercase mb-2">${p.name} était...</p>
+                <h2 class="text-6xl font-black uppercase mb-4 ${p.role === 'Imposteur' ? 'text-red-500' : 'text-indigo-400'}">${p.role}</h2>
+                <div class="text-4xl">${p.role === 'Imposteur' ? '❌' : '😇'}</div>
+            `;
+
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                checkVictory();
+            }, 3000);
+        }
+
+        function checkVictory() {
+            const remImpo = gameState.players.filter(p => p.role === 'Imposteur' && !p.eliminated).length;
+            const remCiv = gameState.players.filter(p => p.role === 'Civil' && !p.eliminated).length;
+
+            if (remImpo === 0) showEnd('Civils');
+            else if (remCiv <= remImpo) showEnd('Imposteurs');
+            else render();
+        }
+
+        function showEnd(winner, viaGuess = false) {
+            const container = document.getElementById('game-content');
+            container.innerHTML = `
+                <div class="text-center space-y-10 py-10 fade-in">
+                    <div class="space-y-2">
+                        <h1 class="text-6xl font-black italic ${winner === 'Civils' ? 'text-indigo-500' : 'text-red-500'}">
+                            VICTOIRE<br>${winner.toUpperCase()}
+                        </h1>
+                        ${viaGuess ? `<p class="text-[10px] font-black uppercase text-red-400 tracking-widest">Le mot a été découvert !</p>` : ''}
                     </div>
-                    <button onclick="window.resetToMenu()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase text-lg">Retour au Salon</button>
+                    
+                    <div class="space-y-2">
+                        ${gameState.players.map(p => `
+                            <div class="flex justify-between p-3 glass rounded-xl border-white/5 text-[10px] font-black uppercase">
+                                <span class="${p.eliminated ? 'opacity-30 line-through' : ''}">${p.name}</span>
+                                <span class="${p.role === 'Imposteur' ? 'text-red-500' : 'text-indigo-400'}">${p.role} (${p.role === 'Civil' ? p.word : p.hint})</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button onclick="location.reload()" class="w-full btn-gradient p-5 rounded-2xl font-black uppercase">Nouveau Jeu</button>
                 </div>
             `;
         }
-
-        window.sendWord = async () => {
-            const input = document.getElementById('word-input');
-            const wordText = (input && input.value.trim()) ? input.value.trim() : "PASSÉ";
-            const roomRef = doc(db, "rooms", currentRoomId);
-            const snap = await getDoc(roomRef);
-            const data = snap.data();
-            
-            const newWords = [...data.gameState.words, { name: data.players[data.gameState.currentSpeakerIndex].name, text: wordText }];
-            
-            // Trouver le prochain orateur non éliminé
-            let nextIndex = data.gameState.currentSpeakerIndex;
-            let foundNext = false;
-            for(let i = 1; i <= data.players.length; i++) {
-                let idx = (data.gameState.currentSpeakerIndex + i) % data.players.length;
-                if(!data.players[idx].eliminated) {
-                    nextIndex = idx;
-                    foundNext = true;
-                    break;
-                }
-            }
-
-            // Si on a fait un tour complet (tous les joueurs actifs ont parlé)
-            const activeCount = data.players.filter(p => !p.eliminated).length;
-            const turnWordsCount = newWords.length % activeCount;
-            let nextPhase = (turnWordsCount === 0) ? 'voting' : 'word_entry';
-
-            await updateDoc(roomRef, {
-                "gameState.words": newWords,
-                "gameState.currentSpeakerIndex": nextIndex,
-                "gameState.phase": nextPhase,
-                "gameState.timer": Date.now() + 16000,
-                "gameState.votes": {}
-            });
-        };
-
-        window.castVote = async (targetId) => {
-            const roomRef = doc(db, "rooms", currentRoomId);
-            const snap = await getDoc(roomRef);
-            const votes = snap.data().gameState.votes || {};
-            votes[currentUserId] = targetId;
-            await updateDoc(roomRef, { "gameState.votes": votes });
-            
-            // Si tout le monde a voté, on peut abréger
-            const activePlayers = snap.data().players.filter(p => !p.eliminated);
-            if(Object.keys(votes).length >= activePlayers.length && isHost) {
-                window.resolveVote();
-            }
-        };
-
-        window.resolveVote = async () => {
-            if(!isHost) return;
-            const roomRef = doc(db, "rooms", currentRoomId);
-            const snap = await getDoc(roomRef);
-            const data = snap.data();
-            const votes = data.gameState.votes || {};
-            const activePlayers = data.players.filter(p => !p.eliminated);
-            
-            if(Object.keys(votes).length === 0) {
-                // Pas de votes, on retourne aux mots
-                await updateDoc(roomRef, { "gameState.phase": 'word_entry', "gameState.timer": Date.now() + 16000 });
-                return;
-            }
-
-            // Compter les votes
-            const counts = {};
-            Object.values(votes).forEach(vid => counts[vid] = (counts[vid] || 0) + 1);
-            
-            let topId = null;
-            let maxVotes = 0;
-            for(const [id, count] of Object.entries(counts)) {
-                if(count > maxVotes) { maxVotes = count; topId = id; }
-                else if(count === maxVotes) { topId = null; } // Égalité
-            }
-
-            // Logique de majorité (plus de la moitié des votants)
-            const majority = Object.keys(votes).length / 2;
-
-            if(topId && maxVotes > majority) {
-                // Élimination
-                const updatedPlayers = data.players.map(p => {
-                    if(p.id === topId) p.eliminated = true;
-                    return p;
-                });
-
-                const eliminatedPlayer = updatedPlayers.find(p => p.id === topId);
-                
-                // Conditions de victoire
-                const remainingImpos = updatedPlayers.filter(p => p.role === 'Imposteur' && !p.eliminated).length;
-                const remainingCivils = updatedPlayers.filter(p => p.role === 'Civil' && !p.eliminated).length;
-
-                if(remainingImpos === 0) {
-                    await updateDoc(roomRef, { status: 'finished', winner: 'Civils', players: updatedPlayers });
-                } else if(remainingCivils <= remainingImpos) {
-                    await updateDoc(roomRef, { status: 'finished', winner: 'Imposteurs', players: updatedPlayers });
-                } else {
-                    // La partie continue, on cherche le prochain orateur
-                    let nextSpeaker = 0;
-                    for(let i=0; i<updatedPlayers.length; i++) {
-                        if(!updatedPlayers[i].eliminated) { nextSpeaker = i; break; }
-                    }
-                    await updateDoc(roomRef, { 
-                        players: updatedPlayers, 
-                        "gameState.phase": 'word_entry', 
-                        "gameState.currentSpeakerIndex": nextSpeaker,
-                        "gameState.timer": Date.now() + 16000 
-                    });
-                }
-            } else {
-                // Pas de majorité ou égalité : on retourne aux mots
-                await updateDoc(roomRef, { "gameState.phase": 'word_entry', "gameState.timer": Date.now() + 16000 });
-            }
-        };
-
-        window.resetToMenu = async () => {
-            if(unsubscribeRoom) unsubscribeRoom();
-            location.reload();
-        };
-
     </script>
 </body>
 </html>
