@@ -36,7 +36,7 @@
         </header>
 
         <div id="auth-status" class="text-[10px] font-bold text-yellow-400 bg-yellow-500/10 px-4 py-1 rounded-full border border-yellow-500/20 text-center">
-            Initialisation...
+            Initialisation Firebase...
         </div>
 
         <div class="w-full glass p-6 rounded-3xl space-y-6 shadow-2xl border-white/5 neon-border">
@@ -111,7 +111,7 @@
         </div>
     </div>
 
-    <!-- OVERLAY RÉSULTATS ET VICTOIRE -->
+    <!-- OVERLAY RESULTATS ET VICTOIRE -->
     <div id="view-overlay" class="fixed inset-0 z-50 bg-black/95 hidden flex flex-col items-center justify-center text-center p-6 text-white">
         <p id="overlay-label" class="text-indigo-500 font-black uppercase tracking-[0.5em] text-xs mb-4"></p>
         <div id="overlay-main" class="text-6xl font-black italic tracking-tighter countdown-pulse"></div>
@@ -175,7 +175,17 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // CONFIGURATION SPÉCIFIQUE UTILISATEUR
+        const firebaseConfig = { 
+            apiKey: "AIzaSyBrn4qChbtsZzP7nMKA5GGR7K024pFxtf0", 
+            authDomain: "rogarsimpostorcards.firebaseapp.com", 
+            projectId: "rogarsimpostorcards", 
+            storageBucket: "rogarsimpostorcards.firebasestorage.app", 
+            messagingSenderId: "750585646128", 
+            appId: "1:750585646128:web:168c0926d3a6c90563f1f5", 
+            measurementId: "G-7KBF70TP2D" 
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -191,11 +201,23 @@
         };
         wordPacks.mix = [...wordPacks.animals, ...wordPacks.food];
 
+        // CORRECTION : Gestion résiliente de l'authentification
         const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
+            try {
+                // Si un token est fourni MAIS qu'il y a un mismatch de projet, on attrape l'erreur et on passe en anonyme
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (tokenErr) {
+                        console.warn("Token mismatch, bascule en mode anonyme...");
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Auth global error", e);
+                document.getElementById('auth-status').innerText = "Erreur de connexion";
             }
         };
 
@@ -203,6 +225,7 @@
             if (user) {
                 currentUser = user;
                 document.getElementById('auth-status').innerText = "Connecté ✅";
+                document.getElementById('auth-status').classList.replace('text-yellow-400', 'text-green-400');
             }
         });
 
@@ -268,7 +291,7 @@
                 if (roomData.status === 'result') displayElimination();
                 else if (roomData.status !== 'starting') document.getElementById('view-overlay').classList.add('hidden');
                 
-            }, (error) => console.error(error));
+            }, (error) => console.error("Firestore snapshot error:", error));
         };
 
         const updateUI = () => {
@@ -337,7 +360,7 @@
 
             document.getElementById('game-player-list').innerHTML = roomData.players.map(p => `
                 <div class="p-3 glass rounded-2xl flex justify-between items-center border-white/5 ${p.eliminated ? 'eliminated' : ''} ${roomData.status === 'playing' && activePlayer.uid === p.uid ? 'ring-2 ring-indigo-500 animate-pulse' : ''}">
-                    <span class="font-bold text-sm text-gray-200">${p.name}</span>
+                    <span class="font-bold text-sm text-gray-200">${p.name} ${p.uid === currentUser.uid ? '(Toi)' : ''}</span>
                     <span class="text-[10px] font-black text-indigo-300 uppercase truncate max-w-[150px] text-right">${p.clue || '...'}</span>
                 </div>
             `).join('');
