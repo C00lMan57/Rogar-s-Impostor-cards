@@ -189,11 +189,15 @@
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // CONFIGURATION FIREBASE
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'rogar-impostor-online';
+        const firebaseConfig = {
+  apiKey: "AIzaSyBrn4qChbtsZzP7nMKA5GGR7K024pFxtf0",
+  authDomain: "rogarsimpostorcards.firebaseapp.com",
+  projectId: "rogarsimpostorcards",
+  storageBucket: "rogarsimpostorcards.firebasestorage.app",
+  messagingSenderId: "750585646128",
+  appId: "1:750585646128:web:168c0926d3a6c90563f1f5",
+  measurementId: "G-7KBF70TP2D"
+};
 
         let currentUser = null, currentRoomId = null, isHost = false, roomData = null, playerName = "";
         let timerInterval = null;
